@@ -1024,7 +1024,7 @@ async function startCamera(){
         facingMode:{ideal:"environment"},
         width:{ideal:1920},
         height:{ideal:1080},
-        frameRate:{ideal:60,max:60}
+        frameRate:{ideal:120,max:120}
       }
     });
 
@@ -1105,7 +1105,7 @@ async function switchPhysicalCamera(deviceId,isUltraWide){
         deviceId:{exact:deviceId},
         width:{ideal:1920},
         height:{ideal:1080},
-        frameRate:{ideal:60,max:60}
+        frameRate:{ideal:120,max:120}
       }
     });
 
@@ -1119,6 +1119,8 @@ async function switchPhysicalCamera(deviceId,isUltraWide){
     ultraWideActive = isUltraWide;
     return true;
   } catch(error) {
+    // Keep the working camera alive if the requested physical lens fails.
+    if (cameraStream) video.srcObject = cameraStream;
     console.warn("Physical camera switch unavailable:",error);
     return false;
   } finally {

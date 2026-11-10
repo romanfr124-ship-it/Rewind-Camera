@@ -90,7 +90,7 @@ body {
   height:auto;
   max-height:70px;
   object-fit:contain;
-  transition:filter .25s ease;
+  transition:filter .55s ease;
 }
 
 .logo.full-frame {
@@ -203,10 +203,10 @@ body {
   opacity:.7;
   transform:scale(.78);
   transition:
-    color .32s ease,
-    opacity .32s ease,
-    transform .38s cubic-bezier(.22,.8,.25,1),
-    letter-spacing .32s ease;
+    color .62s ease,
+    opacity .62s ease,
+    transform .68s cubic-bezier(.22,.8,.25,1),
+    letter-spacing .62s ease;
   cursor:pointer;
   appearance:none;
   -webkit-appearance:none;
@@ -237,7 +237,7 @@ body {
   opacity:0;
   visibility:hidden;
   pointer-events:none;
-  transition:opacity .2s ease, transform .2s ease, visibility .2s;
+  transition:opacity .5s ease, transform .5s ease, visibility .5s;
 }
 
 .zoom-panel.open {
@@ -317,7 +317,7 @@ body {
   position:relative;
   touch-action:pan-y;
   outline:none;
-  transition:border-color .2s, background .2s;
+  transition:border-color .5s, background .5s;
 }
 
 #shutter::before {
@@ -334,7 +334,7 @@ body {
   border-radius:50%;
   background:white;
   box-shadow:0 1px 10px rgba(255,255,255,.18);
-  transition:all .18s ease;
+  transition:all .48s ease;
 }
 
 /* ZOOM BUTTON */
@@ -355,7 +355,7 @@ body {
   letter-spacing:1px;
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
-  transition:background .2s, border-color .2s;
+  transition:background .5s, border-color .5s;
 }
 
 #zoomButton.active {
@@ -409,9 +409,9 @@ body {
   transform:scale(1);
   filter:blur(0);
   transition:
-    opacity .62s cubic-bezier(.22,.75,.25,1),
-    transform .72s cubic-bezier(.22,.75,.25,1),
-    filter .62s ease;
+    opacity .92s cubic-bezier(.22,.75,.25,1),
+    transform 1.02s cubic-bezier(.22,.75,.25,1),
+    filter .92s ease;
   will-change:opacity,transform,filter;
   position:absolute;
   z-index:10;
@@ -463,8 +463,8 @@ body {
   opacity:0;
   transform:translateY(10px);
   transition:
-    opacity .56s ease,
-    transform .64s cubic-bezier(.22,.75,.25,1);
+    opacity .86s ease,
+    transform .94s cubic-bezier(.22,.75,.25,1);
 }
 
 body.camera-active .top,
@@ -509,7 +509,7 @@ body.camera-active .bottom {
   color:white;
   opacity:0;
   pointer-events:none;
-  transition:opacity .2s;
+  transition:opacity .5s;
 }
 
 #statusMessage.show {
@@ -1093,7 +1093,7 @@ function animateLensTo(shape){
   const from = displayLensShape;
   const to = shape;
   const startedAt = performance.now();
-  const duration = 520;
+  const duration = 820;
 
   function frame(now){
     const progress = Math.min(1,(now-startedAt)/duration);

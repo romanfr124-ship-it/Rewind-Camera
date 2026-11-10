@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -10,7 +11,6 @@
 <meta name="apple-mobile-web-app-title" content="REWIND">
 
 <title>REWIND</title>
-
 <style>
 :root {
   --black: #050505;
@@ -42,7 +42,6 @@ body {
 }
 
 /* LIVE CAMERA */
-
 #cameraCanvas {
   position: absolute;
   inset: 0;
@@ -57,7 +56,6 @@ body {
 }
 
 /* LOGO */
-
 .top {
   position: absolute;
   z-index: 5;
@@ -90,7 +88,6 @@ body {
 }
 
 /* RECORDING INDICATOR */
-
 .recording-label {
   display: none;
   align-items: center;
@@ -117,7 +114,6 @@ body {
 }
 
 /* LENS SHAPE CONTROLS */
-
 .lens-controls {
   position: absolute;
   z-index: 5;
@@ -149,7 +145,6 @@ body {
 }
 
 /* BOTTOM CONTROLS */
-
 .bottom {
   position: absolute;
   z-index: 5;
@@ -172,7 +167,6 @@ body {
 }
 
 /* CAMERA SWITCH */
-
 .flip-button {
   position: absolute;
   right: 34px;
@@ -191,7 +185,6 @@ body {
 }
 
 /* SHUTTER BUTTON */
-
 #shutter {
   width: 78px;
   height: 78px;
@@ -223,7 +216,6 @@ body {
 }
 
 /* RED RECORDING CENTRE */
-
 #shutter.recording .inner {
   width: 27px;
   height: 27px;
@@ -232,7 +224,6 @@ body {
 }
 
 /* HOLD PROGRESS */
-
 #shutter.holding::after {
   content: "";
   position: absolute;
@@ -250,7 +241,6 @@ body {
 }
 
 /* TEXT */
-
 .instruction {
   margin-top: 22px;
   color: rgba(255,255,255,.65);
@@ -269,7 +259,6 @@ body {
 }
 
 /* START SCREEN */
-
 #startScreen {
   position: absolute;
   z-index: 10;
@@ -318,7 +307,6 @@ body {
 }
 
 /* STATUS */
-
 #statusMessage {
   position: absolute;
   z-index: 8;
@@ -369,12 +357,10 @@ body {
 </head>
 
 <body>
-
 <video id="cameraVideo" autoplay muted playsinline></video>
 <canvas id="cameraCanvas"></canvas>
 
 <!-- BUILT-IN REWIND LOGO -->
-
 <svg class="logo"
      style="position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 20px);left:22px;"
      viewBox="0 0 100 85"
@@ -398,7 +384,6 @@ body {
 </div>
 
 <!-- LENS OPTIONS -->
-
 <div class="lens-controls">
   <button class="small-control active" id="circleButton">
     CIRCLE
@@ -410,11 +395,8 @@ body {
 </div>
 
 <!-- SHUTTER -->
-
 <div class="bottom">
-
   <div class="camera-controls">
-
     <button class="flip-button"
             id="flipButton"
             aria-label="Switch camera">
@@ -425,7 +407,6 @@ body {
             aria-label="Take photo or record video">
       <span class="inner"></span>
     </button>
-
   </div>
 
   <div class="instruction" id="instruction">
@@ -435,15 +416,12 @@ body {
   <div class="tagline">
     YOUR MOMENT. REWOUND.
   </div>
-
 </div>
 
 <div id="statusMessage"></div>
 
 <!-- CAMERA START SCREEN -->
-
 <div id="startScreen">
-
   <svg class="start-logo"
        viewBox="0 0 100 85"
        xmlns="http://www.w3.org/2000/svg">
@@ -464,9 +442,7 @@ body {
   </p>
 
   <button id="startButton">OPEN CAMERA</button>
-
   <div id="errorMessage"></div>
-
 </div>
 
 <script>
@@ -549,19 +525,19 @@ void main() {
 
   /*
     LENS SIZE
+    Horizontal width remains at approximately
+    82% of the screen width.
 
-    0.82 = approximately 82% of screen width.
-    The X and Y proportions compensate for the
-    phone's portrait aspect ratio, keeping the
-    circle genuinely circular.
+    Equal radii make the circle genuinely round
+    on a portrait phone screen.
   */
 
-  float radiusY = 0.82;
-  float radiusX = aspect * radiusY;
+  float radiusX = aspect * 0.82;
+  float radiusY = radiusX;
 
-  // Oval mode is slightly shorter vertically.
+  // Oval mode is wider and shorter.
   if (uShape > 0.5) {
-    radiusY = 0.62;
+    radiusY = aspect * 0.62;
   }
 
   vec2 lens = vec2(
@@ -644,7 +620,6 @@ void main() {
 function createShader(type, source) {
 
   const shader = gl.createShader(type);
-
   gl.shaderSource(shader, source);
   gl.compileShader(shader);
 
@@ -695,7 +670,6 @@ function setupWebGL() {
   ]);
 
   const buffer = gl.createBuffer();
-
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
   gl.bufferData(
     gl.ARRAY_BUFFER,
@@ -1062,7 +1036,6 @@ async function saveFile(file) {
   link.download = file.name;
 
   document.body.appendChild(link);
-
   link.click();
   link.remove();
 
@@ -1268,7 +1241,6 @@ function shutterDown(event) {
   holdTimer = setTimeout(() => {
 
     longPressTriggered = true;
-
     shutter.classList.remove("holding");
 
     startRecording();

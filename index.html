@@ -139,50 +139,58 @@ body { position:fixed; inset:0; }
   align-items:center;
   pointer-events:auto;
 }
-.flip-button {
-  position:absolute;
-  right:34px;
-  width:46px;
-  height:46px;
-  border-radius:50%;
-  border:1px solid rgba(255,255,255,.35);
-  background:rgba(0,0,0,.4);
-  color:white;
-  font-size:24px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-}
 
 /* MODE SELECTOR */
 .mode-selector {
-  width:250px;
+  width:min(290px, 88vw);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:13px;
+  gap:15px;
   touch-action:pan-y;
 }
+
 .mode-names {
   width:100%;
   display:flex;
   justify-content:space-between;
   align-items:center;
+  overflow:visible;
 }
+
 .mode-name {
-  width:33.333%;
-  text-align:center;
-  color:rgba(255,255,255,.35);
+  flex:1;
+  min-width:0;
+  padding:9px 0;
+  border:0;
+  background:transparent;
+  color:rgba(255,255,255,.29);
+  font-family:inherit;
   font-size:9px;
   font-weight:700;
   letter-spacing:1.5px;
-  transition:color .2s, opacity .2s;
+  text-align:center;
+  white-space:nowrap;
+  opacity:.7;
+  transform:scale(.78);
+  transition:
+    color .32s ease,
+    opacity .32s ease,
+    transform .38s cubic-bezier(.22,.8,.25,1),
+    letter-spacing .32s ease;
+  cursor:pointer;
+  -webkit-appearance:none;
+  appearance:none;
 }
+
 .mode-name.active {
   color:white;
+  opacity:1;
+  transform:scale(1.12);
+  letter-spacing:2px;
 }
+
+/* SHUTTER */
 .shutter-row {
   width:100%;
   display:flex;
@@ -219,7 +227,7 @@ body { position:fixed; inset:0; }
   transition:all .18s ease;
 }
 
-/* VIDEO: LARGE RED CENTRE */
+/* VIDEO */
 #shutter.video-mode {
   border-color:var(--red);
 }
@@ -229,8 +237,6 @@ body { position:fixed; inset:0; }
   border-radius:50%;
   background:var(--red);
 }
-
-/* VIDEO RECORDING */
 #shutter.video-mode.recording .inner {
   width:38px;
   height:38px;
@@ -334,6 +340,7 @@ body { position:fixed; inset:0; }
   .logo { width:110px; }
   .lens-controls { top:calc(env(safe-area-inset-top) + 12px); }
   .bottom { bottom:calc(env(safe-area-inset-bottom) + 10px); }
+  .mode-selector { width:270px; gap:9px; }
   #shutter { width:68px; height:68px; }
   #shutter .inner { width:52px; height:52px; }
   #shutter.video-mode .inner,
@@ -345,6 +352,14 @@ body { position:fixed; inset:0; }
   }
   .instruction { margin-top:10px; }
   .tagline { margin-top:6px; }
+}
+
+@media (prefers-reduced-motion:reduce) {
+  .mode-name,
+  #shutter,
+  #shutter .inner {
+    transition:none;
+  }
 }
 </style>
 </head>
@@ -369,13 +384,12 @@ body { position:fixed; inset:0; }
 
 <div class="bottom">
   <div class="camera-controls">
-    <button class="flip-button" id="flipButton" aria-label="Switch camera">↻</button>
 
     <div class="mode-selector" id="modeSelector">
       <div class="mode-names">
-        <div class="mode-name" data-mode="slow">SLOW-MO</div>
-        <div class="mode-name active" data-mode="photo">PHOTO</div>
-        <div class="mode-name" data-mode="video">VIDEO</div>
+        <button class="mode-name" data-mode="slow">SLOW-MO</button>
+        <button class="mode-name active" data-mode="photo">PHOTO</button>
+        <button class="mode-name" data-mode="video">VIDEO</button>
       </div>
 
       <div class="shutter-row">
@@ -422,7 +436,6 @@ const recordingTime=document.getElementById("recordingTime");
 const instruction=document.getElementById("instruction");
 
 let cameraStream=null;
-let facingMode="environment";
 let cameraReady=false;
 let recorder=null;
 let recordedChunks=[];
@@ -487,8 +500,6 @@ void main(){
     float edgeCurve=pow(r,4.0)*(1.0-r);
     mapped=r+.34*edgeCurve;
   }else{
-    /* FULL FRAME FISHEYE:
-       Preserve the whole frame while adding circular warping. */
     float strength=.16;
     float radial=length(p);
     float curve=pow(radial,3.0);
@@ -549,7 +560,6 @@ void main(){
     colour.g+=greenRing*.085;
     colour*=1.0-smoothstep(.994,1.0,r);
   }else{
-    /* Faint red and green vertical optical lines. */
     float redLine=exp(-pow((vUv.x-.125)/.0018,2.0));
     float greenLine=exp(-pow((vUv.x-.135)/.0018,2.0));
     colour.r+=redLine*.10;
@@ -657,7 +667,7 @@ async function startCamera(){
     cameraStream=await navigator.mediaDevices.getUserMedia({
       audio:true,
       video:{
-        facingMode:{ideal:facingMode},
+        facingMode:{ideal:"environment"},
         width:{ideal:1920},
         height:{ideal:1080},
         frameRate:{ideal:120,max:120}
@@ -686,16 +696,6 @@ async function startCamera(){
 }
 
 startButton.addEventListener("click",startCamera);
-
-document.getElementById("flipButton").addEventListener("click",async()=>{
-  if(recording||slowProcessing){
-    showStatus("FINISH RECORDING FIRST");
-    return;
-  }
-
-  facingMode=facingMode==="environment"?"user":"environment";
-  await startCamera();
-});
 
 function setLens(shape){
   lensShape=shape;
@@ -730,6 +730,12 @@ function setMode(mode){
     instruction.textContent="TAP PHOTO · SWIPE TO CHANGE MODE";
   }
 }
+
+document.querySelectorAll(".mode-name").forEach(button=>{
+  button.addEventListener("click",()=>{
+    setMode(button.dataset.mode);
+  });
+});
 
 function showStatus(message){
   statusMessage.textContent=message;
@@ -889,11 +895,7 @@ function stopNormalVideo(){
   if(recorder.state!=="inactive") recorder.stop();
 }
 
-/* SLOW MOTION
-   Capture the processed camera feed at the highest available
-   frame rate, then replay it at one-quarter speed into a
-   30fps output recording.
-*/
+/* SLOW MOTION */
 async function startSlowMotion(){
   if(!cameraReady||recording||slowProcessing) return;
 

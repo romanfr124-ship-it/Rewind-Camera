@@ -51,7 +51,7 @@ body { position:fixed; inset:0; }
   pointer-events:none;
 }
 
-/* TOP LOGO */
+/* CENTRED LOGO */
 .top {
   position:absolute;
   z-index:5;
@@ -91,7 +91,7 @@ body { position:fixed; inset:0; }
 }
 @keyframes blink { 50% {opacity:.25;} }
 
-/* LENS */
+/* LENS SELECTOR */
 .lens-controls {
   position:absolute;
   z-index:5;
@@ -120,101 +120,13 @@ body { position:fixed; inset:0; }
   background:rgba(255,255,255,.12);
 }
 
-/* ZOOM CONTROL */
-.zoom-control {
-  position:absolute;
-  z-index:7;
-  left:50%;
-  top:56%;
-  transform:translate(-50%,-50%);
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  gap:12px;
-  pointer-events:none;
-}
-.zoom-button {
-  pointer-events:auto;
-  border:1px solid rgba(255,255,255,.35);
-  border-radius:30px;
-  padding:10px 17px;
-  min-width:100px;
-  background:rgba(0,0,0,.55);
-  color:white;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:2px;
-  backdrop-filter:blur(10px);
-  -webkit-backdrop-filter:blur(10px);
-}
-.zoom-panel {
-  display:none;
-  pointer-events:auto;
-  align-items:center;
-  justify-content:center;
-  gap:13px;
-  height:185px;
-  padding:13px 16px;
-  border:1px solid rgba(255,255,255,.25);
-  border-radius:25px;
-  background:rgba(0,0,0,.72);
-  backdrop-filter:blur(12px);
-  -webkit-backdrop-filter:blur(12px);
-}
-.zoom-panel.open { display:flex; }
-.zoom-slider {
-  appearance:none;
-  -webkit-appearance:none;
-  writing-mode:vertical-lr;
-  direction:rtl;
-  width:28px;
-  height:135px;
-  background:transparent;
-  touch-action:none;
-}
-.zoom-slider::-webkit-slider-runnable-track {
-  width:4px;
-  background:rgba(255,255,255,.35);
-  border-radius:5px;
-}
-.zoom-slider::-webkit-slider-thumb {
-  appearance:none;
-  -webkit-appearance:none;
-  width:19px;
-  height:19px;
-  margin-left:-7px;
-  border-radius:50%;
-  background:white;
-  border:2px solid #aaa;
-}
-.zoom-slider::-moz-range-track {
-  width:4px;
-  background:rgba(255,255,255,.35);
-}
-.zoom-slider::-moz-range-thumb {
-  width:17px;
-  height:17px;
-  border-radius:50%;
-  background:white;
-  border:2px solid #aaa;
-}
-.zoom-value {
-  min-width:38px;
-  color:white;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  text-align:center;
-  writing-mode:vertical-rl;
-}
-
 /* BOTTOM CAMERA CONTROLS */
 .bottom {
   position:absolute;
   z-index:5;
   left:0;
   right:0;
-  bottom:calc(env(safe-area-inset-bottom) + 8px);
+  bottom:calc(env(safe-area-inset-bottom) + 48px);
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -231,13 +143,81 @@ body { position:fixed; inset:0; }
 
 /* MODE SELECTOR */
 .mode-selector {
-  width:min(290px, 88vw);
+  width:min(330px, 90vw);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:15px;
+  gap:13px;
   touch-action:pan-y;
 }
+
+/* ZOOM ADJUSTER */
+.zoom-panel {
+  width:100%;
+  display:flex;
+  flex-direction:column;
+  gap:7px;
+  padding:0 15px;
+  max-height:0;
+  opacity:0;
+  overflow:hidden;
+  transform:translateY(8px);
+  pointer-events:none;
+  transition:
+    max-height .28s ease,
+    opacity .22s ease,
+    transform .28s ease;
+}
+.zoom-panel.open {
+  max-height:65px;
+  opacity:1;
+  transform:translateY(0);
+  pointer-events:auto;
+}
+.zoom-readout {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:rgba(255,255,255,.72);
+}
+#zoomValue {
+  color:white;
+  font-size:12px;
+  letter-spacing:1px;
+  font-variant-numeric:tabular-nums;
+}
+#zoomSlider {
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  height:4px;
+  border-radius:10px;
+  outline:none;
+  background:rgba(255,255,255,.38);
+  touch-action:pan-x;
+}
+#zoomSlider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:19px;
+  height:19px;
+  border-radius:50%;
+  background:white;
+  border:3px solid rgba(255,255,255,.35);
+  box-shadow:0 0 0 3px rgba(0,0,0,.45);
+}
+#zoomSlider::-moz-range-thumb {
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:white;
+  border:2px solid rgba(255,255,255,.35);
+}
+
+/* MODE NAMES */
 .mode-names {
   width:100%;
   display:flex;
@@ -266,6 +246,7 @@ body { position:fixed; inset:0; }
     transform .38s cubic-bezier(.22,.8,.25,1),
     letter-spacing .32s ease;
   cursor:pointer;
+  -webkit-appearance:none;
   appearance:none;
 }
 .mode-name.active {
@@ -275,7 +256,7 @@ body { position:fixed; inset:0; }
   letter-spacing:2px;
 }
 
-/* SHUTTER */
+/* SHUTTER AND ZOOM BUTTON */
 .shutter-row {
   width:100%;
   display:flex;
@@ -310,6 +291,33 @@ body { position:fixed; inset:0; }
   border-radius:50%;
   background:white;
   transition:all .18s ease;
+}
+
+/* ZOOM BUTTON */
+#zoomToggle {
+  position:absolute;
+  left:calc(50% + 57px);
+  width:43px;
+  height:43px;
+  border:1px solid rgba(255,255,255,.38);
+  border-radius:50%;
+  background:rgba(0,0,0,.48);
+  color:white;
+  font-family:inherit;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.5px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:background .2s,border-color .2s,transform .2s;
+}
+#zoomToggle.active {
+  background:rgba(255,255,255,.18);
+  border-color:white;
+  transform:scale(1.06);
 }
 
 /* VIDEO */
@@ -387,7 +395,7 @@ body { position:fixed; inset:0; }
 #statusMessage {
   position:absolute;
   z-index:8;
-  bottom:calc(env(safe-area-inset-bottom) + 125px);
+  bottom:calc(env(safe-area-inset-bottom) + 145px);
   left:20px;
   right:20px;
   text-align:center;
@@ -404,8 +412,8 @@ body { position:fixed; inset:0; }
   .top { top:calc(env(safe-area-inset-top) + 10px); }
   .logo { width:110px; }
   .lens-controls { top:calc(env(safe-area-inset-top) + 12px); }
-  .bottom { bottom:calc(env(safe-area-inset-bottom) + 3px); }
-  .mode-selector { width:270px; gap:8px; }
+  .bottom { bottom:calc(env(safe-area-inset-bottom) + 18px); }
+  .mode-selector { width:290px; gap:8px; }
   #shutter { width:68px; height:68px; }
   #shutter .inner { width:52px; height:52px; }
   #shutter.video-mode .inner,
@@ -415,14 +423,18 @@ body { position:fixed; inset:0; }
     width:34px;
     height:34px;
   }
-  .zoom-control { top:55%; }
-  .zoom-panel { height:150px; }
-  .zoom-slider { height:105px; }
+  #zoomToggle {
+    left:calc(50% + 51px);
+    width:39px;
+    height:39px;
+  }
 }
 @media (prefers-reduced-motion:reduce) {
   .mode-name,
   #shutter,
-  #shutter .inner {
+  #shutter .inner,
+  .zoom-panel,
+  #zoomToggle {
     transition:none;
   }
 }
@@ -447,36 +459,39 @@ body { position:fixed; inset:0; }
   <button class="small-control" id="fullButton">FULL FRAME</button>
 </div>
 
-<div class="zoom-control">
-  <div class="zoom-panel" id="zoomPanel">
-    <input
-      class="zoom-slider"
-      id="zoomSlider"
-      type="range"
-      min="0.5"
-      max="3"
-      step="0.1"
-      value="1"
-      aria-label="Camera zoom"
-    >
-    <div class="zoom-value" id="zoomValue">1.0×</div>
-  </div>
-  <button class="zoom-button" id="zoomButton">ZOOM 1.0×</button>
-</div>
-
 <div class="bottom">
   <div class="camera-controls">
     <div class="mode-selector" id="modeSelector">
+
+      <div class="zoom-panel" id="zoomPanel">
+        <div class="zoom-readout">
+          <span>ZOOM</span>
+          <span id="zoomValue">1.0×</span>
+        </div>
+        <input
+          id="zoomSlider"
+          type="range"
+          min="0.5"
+          max="3"
+          step="0.1"
+          value="1"
+          aria-label="Zoom"
+        >
+      </div>
+
       <div class="mode-names">
         <button class="mode-name" data-mode="slow">SLOW-MO</button>
         <button class="mode-name active" data-mode="photo">PHOTO</button>
         <button class="mode-name" data-mode="video">VIDEO</button>
       </div>
+
       <div class="shutter-row">
         <button id="shutter" aria-label="Capture">
           <span class="inner"></span>
         </button>
+        <button id="zoomToggle" aria-label="Open zoom controls" aria-expanded="false">1×</button>
       </div>
+
     </div>
   </div>
 </div>
@@ -508,7 +523,8 @@ const errorMessage=document.getElementById("errorMessage");
 const statusMessage=document.getElementById("statusMessage");
 const recordingLabel=document.getElementById("recordingLabel");
 const recordingTime=document.getElementById("recordingTime");
-const zoomButton=document.getElementById("zoomButton");
+
+const zoomToggle=document.getElementById("zoomToggle");
 const zoomPanel=document.getElementById("zoomPanel");
 const zoomSlider=document.getElementById("zoomSlider");
 const zoomValue=document.getElementById("zoomValue");
@@ -529,7 +545,6 @@ let currentMode="photo";
 let slowProcessing=false;
 let slowSourceUrl=null;
 let zoomLevel=1;
-let slowLensShape=0;
 
 const vertexShaderSource=`
 attribute vec2 position;
@@ -542,6 +557,7 @@ void main(){
 const fragmentShaderSource=`
 precision highp float;
 varying vec2 vUv;
+
 uniform sampler2D uVideo;
 uniform vec2 uResolution;
 uniform vec2 uVideoResolution;
@@ -581,8 +597,10 @@ void main(){
     float edgeCurve=pow(r,4.0)*(1.0-r);
     mapped=r+.34*edgeCurve;
   }else{
+    float strength=.16;
     float radial=length(p);
-    mapped=radial*(1.0-.16*pow(radial,3.0));
+    float curve=pow(radial,3.0);
+    mapped=radial*(1.0-strength*curve);
   }
 
   vec2 direction=rawRadius>.0001?lens/rawRadius:vec2(0.);
@@ -596,8 +614,13 @@ void main(){
     warped=screenDirection*(radial*(1.0-.16*pow(radial,2.0)));
   }
 
-  // Zoom changes the sampled camera area while keeping the lens shape.
-  warped/=uZoom;
+  /*
+    Apply zoom to the source sampling coordinates AFTER
+    calculating the fisheye distortion. This keeps the
+    optical lens geometry and its warping consistent.
+  */
+  float safeZoom=max(uZoom,.01);
+  warped/=safeZoom;
 
   float videoAspect=uVideoResolution.x/uVideoResolution.y;
   vec2 uv=vec2(.5);
@@ -610,30 +633,35 @@ void main(){
     uv.y+=warped.y*(videoAspect/aspect)*.5;
   }
 
-  // Keep areas outside the source image black instead of stretching edges.
-  if(uv.x<0.0||uv.x>1.0||uv.y<0.0||uv.y>1.0){
-    gl_FragColor=vec4(0.,0.,0.,1.);
-    return;
-  }
-
   uv=clamp(uv,vec2(.001),vec2(.999));
 
   float aberration=pow(min(r,1.0),3.0)*.006;
-  vec2 offset=direction*aberration;
+  vec2 offset=direction*(aberration/safeZoom);
 
-  float red=texture2D(uVideo,clamp(uv+offset,vec2(.001),vec2(.999))).r;
+  float red=texture2D(
+    uVideo,
+    clamp(uv+offset,vec2(.001),vec2(.999))
+  ).r;
+
   float green=texture2D(uVideo,uv).g;
-  float blue=texture2D(uVideo,clamp(uv-offset,vec2(.001),vec2(.999))).b;
+
+  float blue=texture2D(
+    uVideo,
+    clamp(uv-offset,vec2(.001),vec2(.999))
+  ).b;
 
   vec3 colour=vec3(red,green,blue);
 
   float centreGlow=1.0+.10*exp(-r*r*4.0);
 
+  // Circle retains its optical edge falloff and vignette.
+  // Full Frame receives neither.
   float circleFalloff=
       (1.0-.28*smoothstep(.25,1.0,r))
     * (1.0-.48*smoothstep(.62,1.0,r));
 
   float opticalFalloff=uShape<.5?circleFalloff:1.0;
+
   float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
 
   colour*=centreGlow*directionalLight*opticalFalloff;
@@ -642,7 +670,11 @@ void main(){
   colour.g*=1.005;
   colour.b*=.965;
 
-  float grain=fract(sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))*43758.5453);
+  float grain=fract(
+    sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))
+    *43758.5453
+  );
+
   colour+=(grain-.5)*.025;
 
   if(uShape<.5){
@@ -665,9 +697,11 @@ function createShader(type,source){
   const shader=gl.createShader(type);
   gl.shaderSource(shader,source);
   gl.compileShader(shader);
+
   if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
     throw new Error(gl.getShaderInfoLog(shader));
   }
+
   return shader;
 }
 
@@ -728,15 +762,38 @@ function render(now=0){
     gl.bindTexture(gl.TEXTURE_2D,texture);
 
     try{
-      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
+      gl.texImage2D(
+        gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,
+        gl.UNSIGNED_BYTE,video
+      );
     }catch(e){}
 
     gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
-    gl.uniform2f(gl.getUniformLocation(program,"uResolution"),canvas.width,canvas.height);
-    gl.uniform2f(gl.getUniformLocation(program,"uVideoResolution"),video.videoWidth||1,video.videoHeight||1);
-    gl.uniform1f(gl.getUniformLocation(program,"uShape"),slowProcessing?slowLensShape:lensShape);
-    gl.uniform1f(gl.getUniformLocation(program,"uTime"),now*.001);
-    gl.uniform1f(gl.getUniformLocation(program,"uZoom"),zoomLevel);
+
+    gl.uniform2f(
+      gl.getUniformLocation(program,"uResolution"),
+      canvas.width,canvas.height
+    );
+
+    gl.uniform2f(
+      gl.getUniformLocation(program,"uVideoResolution"),
+      video.videoWidth||1,video.videoHeight||1
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uShape"),
+      lensShape
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uTime"),
+      now*.001
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uZoom"),
+      zoomLevel
+    );
 
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
@@ -744,6 +801,7 @@ function render(now=0){
   animationFrame=requestAnimationFrame(render);
 }
 
+/* CAMERA */
 async function startCamera(){
   errorMessage.textContent="";
   startButton.textContent="OPENING CAMERA";
@@ -778,49 +836,61 @@ async function startCamera(){
 
     startScreen.style.display="none";
     resizeCanvas();
+
     cancelAnimationFrame(animationFrame);
     animationFrame=requestAnimationFrame(render);
 
   }catch(error){
     console.error(error);
-    errorMessage.textContent=error.message||"Unable to access the camera. Check camera permissions.";
+    errorMessage.textContent=error.message||
+      "Unable to access the camera. Check camera permissions.";
     startButton.textContent="TRY AGAIN";
   }
 }
 
 startButton.addEventListener("click",startCamera);
 
-/* LENS */
+/* LENS SELECTION */
 function setLens(shape){
   lensShape=shape;
-  document.getElementById("circleButton").classList.toggle("active",shape===0);
-  document.getElementById("fullButton").classList.toggle("active",shape===1);
+
+  document.getElementById("circleButton")
+    .classList.toggle("active",shape===0);
+
+  document.getElementById("fullButton")
+    .classList.toggle("active",shape===1);
 }
 
-document.getElementById("circleButton").addEventListener("click",()=>setLens(0));
-document.getElementById("fullButton").addEventListener("click",()=>setLens(1));
+document.getElementById("circleButton")
+  .addEventListener("click",()=>setLens(0));
 
-/* ZOOM */
-function updateZoom(){
-  zoomLevel=Number(zoomSlider.value);
-  const label=zoomLevel.toFixed(1)+"×";
-  zoomValue.textContent=label;
-  zoomButton.textContent="ZOOM "+label;
+document.getElementById("fullButton")
+  .addEventListener("click",()=>setLens(1));
+
+/* ZOOM CONTROLS */
+function updateZoom(value){
+  zoomLevel=Math.max(.5,Math.min(3,Number(value)));
+  zoomSlider.value=zoomLevel;
+  zoomValue.textContent=zoomLevel.toFixed(1)+"×";
+  zoomToggle.textContent=zoomLevel.toFixed(1)+"×";
 }
 
-zoomSlider.addEventListener("input",updateZoom);
-
-zoomButton.addEventListener("click",()=>{
-  zoomPanel.classList.toggle("open");
+zoomSlider.addEventListener("input",()=>{
+  updateZoom(zoomSlider.value);
 });
 
-document.addEventListener("click",event=>{
-  if(!event.target.closest(".zoom-control")){
-    zoomPanel.classList.remove("open");
-  }
+zoomToggle.addEventListener("click",()=>{
+  const isOpen=zoomPanel.classList.toggle("open");
+
+  zoomToggle.classList.toggle("active",isOpen);
+  zoomToggle.setAttribute("aria-expanded",String(isOpen));
+  zoomToggle.setAttribute(
+    "aria-label",
+    isOpen?"Close zoom controls":"Open zoom controls"
+  );
 });
 
-/* MODE */
+/* MODE SELECTION */
 function setMode(mode){
   if(recording||slowProcessing){
     showStatus("FINISH RECORDING FIRST");
@@ -852,8 +922,12 @@ document.querySelectorAll(".mode-name").forEach(button=>{
 function showStatus(message){
   statusMessage.textContent=message;
   statusMessage.classList.add("show");
+
   clearTimeout(statusTimeout);
-  statusTimeout=setTimeout(()=>statusMessage.classList.remove("show"),2600);
+
+  statusTimeout=setTimeout(()=>{
+    statusMessage.classList.remove("show");
+  },2600);
 }
 
 /* SWIPE MODE SELECTOR */
@@ -865,6 +939,7 @@ const modeSelector=document.getElementById("modeSelector");
 
 modeSelector.addEventListener("touchstart",event=>{
   if(event.touches.length!==1) return;
+
   swipeStartX=event.touches[0].clientX;
   swipeStartY=event.touches[0].clientY;
   swiping=true;
@@ -872,6 +947,7 @@ modeSelector.addEventListener("touchstart",event=>{
 
 modeSelector.addEventListener("touchend",event=>{
   if(!swiping) return;
+
   swiping=false;
 
   const dx=event.changedTouches[0].clientX-swipeStartX;
@@ -903,11 +979,14 @@ async function saveFile(blob,filename){
 
   const url=URL.createObjectURL(blob);
   const link=document.createElement("a");
+
   link.href=url;
   link.download=filename;
+
   document.body.appendChild(link);
   link.click();
   link.remove();
+
   setTimeout(()=>URL.revokeObjectURL(url),15000);
 }
 
@@ -944,6 +1023,7 @@ function updateRecordingClock(){
   if(!recording) return;
 
   const seconds=Math.floor((Date.now()-recordingStartedAt)/1000);
+
   recordingTime.textContent="REC "+
     String(Math.floor(seconds/60)).padStart(2,"0")+":"+
     String(seconds%60).padStart(2,"0");
@@ -967,10 +1047,18 @@ function startNormalVideo(){
 
   try{
     const stream=canvas.captureStream(30);
-    cameraStream.getAudioTracks().forEach(track=>stream.addTrack(track));
+
+    cameraStream.getAudioTracks().forEach(track=>{
+      stream.addTrack(track);
+    });
 
     const mimeType=supportedMime();
-    recorder=new MediaRecorder(stream,mimeType?{mimeType}:{});
+
+    recorder=new MediaRecorder(
+      stream,
+      mimeType?{mimeType}:{}
+    );
+
     recordedChunks=[];
 
     recorder.ondataavailable=e=>{
@@ -985,9 +1073,14 @@ function startNormalVideo(){
       stream.getTracks().forEach(track=>track.stop());
 
       if(blob.size){
-        await saveFile(blob,"REWIND-VIDEO-"+Date.now()+"."+ext);
+        await saveFile(
+          blob,
+          "REWIND-VIDEO-"+Date.now()+"."+ext
+        );
+
         showStatus("VIDEO READY TO SAVE");
       }
+
       recordedChunks=[];
     };
 
@@ -1056,7 +1149,7 @@ async function startSlowMotion(){
     sourceRecorder.start(250);
     recorder=sourceRecorder;
     recording=true;
-    slowLensShape=lensShape;
+
     shutter.classList.add("recording");
     beginRecordingClock();
 
@@ -1070,7 +1163,7 @@ async function startSlowMotion(){
   }
 }
 
-/* SLOW MOTION EXPORT */
+/* SLOW-MOTION EXPORT */
 async function processSlowMotion(sourceBlob){
   slowProcessing=true;
   recording=false;
@@ -1079,6 +1172,7 @@ async function processSlowMotion(sourceBlob){
   shutter.classList.add("recording");
 
   const originalStream=cameraStream;
+  const originalLensShape=lensShape;
   const originalZoom=zoomLevel;
 
   slowSourceUrl=URL.createObjectURL(sourceBlob);
@@ -1126,14 +1220,17 @@ async function processSlowMotion(sourceBlob){
           cleanup();
           resolve();
         };
+
         const failed=()=>{
           cleanup();
           reject(new Error("Could not decode the slow-motion recording."));
         };
+
         const cleanup=()=>{
           video.removeEventListener("loadeddata",ready);
           video.removeEventListener("error",failed);
         };
+
         video.addEventListener("loadeddata",ready,{once:true});
         video.addEventListener("error",failed,{once:true});
       });
@@ -1145,6 +1242,7 @@ async function processSlowMotion(sourceBlob){
     outputStream=canvas.captureStream(30);
 
     const outputMime=supportedMime();
+
     outputRecorder=new MediaRecorder(
       outputStream,
       outputMime?{mimeType:outputMime}:{}
@@ -1158,6 +1256,7 @@ async function processSlowMotion(sourceBlob){
 
     const finished=new Promise((resolve,reject)=>{
       outputRecorder.addEventListener("stop",resolve,{once:true});
+
       outputRecorder.addEventListener("error",event=>{
         reject(event.error||new Error("Export recording failed."));
       },{once:true});
@@ -1213,6 +1312,7 @@ async function processSlowMotion(sourceBlob){
         result,
         "REWIND-SLOWMO-4X-"+Date.now()+"."+extension
       );
+
       showStatus("4× SLOW MOTION READY");
     }else{
       showStatus("SLOW MOTION COULD NOT BE SAVED");
@@ -1249,8 +1349,10 @@ async function processSlowMotion(sourceBlob){
       slowSourceUrl=null;
     }
 
+    lensShape=originalLensShape;
+    updateZoom(originalZoom);
+
     slowProcessing=false;
-    zoomLevel=originalZoom;
     resetShutter();
   }
 }
@@ -1271,7 +1373,7 @@ function resetShutter(){
   setMode(currentMode);
 }
 
-/* SHUTTER */
+/* SHUTTER ACTION */
 shutter.addEventListener("click",event=>{
   event.preventDefault();
 
@@ -1296,7 +1398,10 @@ shutter.addEventListener("click",event=>{
 
 /* RESIZE */
 window.addEventListener("resize",resizeCanvas);
-window.addEventListener("orientationchange",()=>setTimeout(resizeCanvas,250));
+
+window.addEventListener("orientationchange",()=>{
+  setTimeout(resizeCanvas,250);
+});
 
 /* CLEANUP */
 window.addEventListener("pagehide",()=>{
@@ -1307,6 +1412,9 @@ window.addEventListener("pagehide",()=>{
     cameraStream.getTracks().forEach(track=>track.stop());
   }
 });
+
+/* INITIAL ZOOM DISPLAY */
+updateZoom(1);
 </script>
 </body>
 </html>

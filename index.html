@@ -664,6 +664,13 @@ let zoomLevel = 1;
 let slowLensShape = 0;
 let slowZoomLevel = 1;
 
+// Physical rear-camera selection. iOS Safari may expose only a virtual
+// rear camera; use the ultra-wide lens only when it is explicitly identified.
+let defaultCameraDeviceId = null;
+let ultraWideCameraDeviceId = null;
+let ultraWideActive = false;
+let cameraSwitching = false;
+
 /* SHADERS */
 
 const vertexShaderSource = `
@@ -956,7 +963,9 @@ function render(now=0){
     }catch(e){}
 
     const activeShape = slowProcessing ? slowLensShape : lensShape;
-    const activeZoom = slowProcessing ? slowZoomLevel : zoomLevel;
+    const selectedZoom = slowProcessing ? slowZoomLevel : zoomLevel;
+    const activeUltraWide = slowProcessing ? slowLensShape===1 && ultraWideActive : ultraWideActive;
+    const activeZoom = selectedZoom * (activeUltraWide ? 1.4 : 1.0);
 
     gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
 
@@ -1015,9 +1024,32 @@ async function startCamera(){
         facingMode:{ideal:"environment"},
         width:{ideal:1920},
         height:{ideal:1080},
-        frameRate:{ideal:120,max:120}
+        frameRate:{ideal:60,max:60}
       }
     });
+
+    // Once permission is granted, camera labels and device IDs become visible.
+    // Prefer a separately exposed ultra-wide camera for Full Frame mode.
+    const initialTrack = cameraStream.getVideoTracks()[0];
+    defaultCameraDeviceId = initialTrack?.getSettings?.().deviceId || null;
+
+    try {
+      const devices = await navigator.mediaDevices.enumerateDevices();
+      const rearCameras = devices.filter(device =>
+        device.kind === "videoinput" &&
+        /back|rear|environment/i.test(device.label)
+      );
+
+      const ultraWideCamera = rearCameras.find(device =>
+        /ultra.?wide|ultrawide|0[.,]5\\s*x|0[.,]5x|\.5\\s*x|\.5x/i.test(device.label)
+      );
+
+      if (ultraWideCamera) {
+        ultraWideCameraDeviceId = ultraWideCamera.deviceId;
+      }
+    } catch (deviceError) {
+      console.warn("Could not enumerate camera lenses:",deviceError);
+    }
 
     video.srcObject = cameraStream;
     video.removeAttribute("src");
@@ -1053,7 +1085,48 @@ startButton.addEventListener("click",startCamera);
 
 /* LENS */
 
-function setLens(shape){
+async function switchPhysicalCamera(deviceId,isUltraWide){
+  if(!deviceId || !cameraReady || cameraSwitching) return false;
+
+  const currentTrack = cameraStream?.getVideoTracks?.()[0];
+  const currentId = currentTrack?.getSettings?.().deviceId;
+
+  if(currentId === deviceId){
+    ultraWideActive = isUltraWide;
+    return true;
+  }
+
+  cameraSwitching = true;
+
+  try {
+    const nextStream = await navigator.mediaDevices.getUserMedia({
+      audio:true,
+      video:{
+        deviceId:{exact:deviceId},
+        width:{ideal:1920},
+        height:{ideal:1080},
+        frameRate:{ideal:60,max:60}
+      }
+    });
+
+    const previousStream = cameraStream;
+    video.srcObject = nextStream;
+    await video.play();
+
+    cameraStream = nextStream;
+    previousStream?.getTracks?.().forEach(track=>track.stop());
+
+    ultraWideActive = isUltraWide;
+    return true;
+  } catch(error) {
+    console.warn("Physical camera switch unavailable:",error);
+    return false;
+  } finally {
+    cameraSwitching = false;
+  }
+}
+
+async function setLens(shape){
   lensShape = shape;
 
   document.getElementById("circleButton")
@@ -1063,6 +1136,20 @@ function setLens(shape){
     .classList.toggle("active",shape===1);
 
   mainLogo.classList.toggle("full-frame",shape===1);
+
+  // Switch to the physical ultra-wide camera only when Safari exposes it.
+  // The normal 1.0x UI value is calibrated to a 1.4x crop of the 0.5x lens,
+  // giving an approximate 0.7x field of view while retaining the 1.0x label.
+  if(shape===1 && ultraWideCameraDeviceId){
+    const switched = await switchPhysicalCamera(ultraWideCameraDeviceId,true);
+    if(!switched) showStatus("ULTRA-WIDE LENS COULD NOT BE SELECTED");
+  } else if(shape===0 && defaultCameraDeviceId){
+    const switched = await switchPhysicalCamera(defaultCameraDeviceId,false);
+    if(!switched) showStatus("COULD NOT RESTORE MAIN CAMERA");
+  } else if(shape===1 && !ultraWideCameraDeviceId){
+    ultraWideActive = false;
+    showStatus("ULTRA-WIDE LENS NOT EXPOSED BY SAFARI");
+  }
 
   // Circle mode cannot zoom below 1x.
   if(shape===0 && zoomLevel<1){

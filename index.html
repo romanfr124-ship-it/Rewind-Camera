@@ -1,0 +1,665 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#080706">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>REWIND</title>
+
+<style>
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #080706;
+  color: white;
+  font-family: Arial, sans-serif;
+}
+
+#camera {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+#video {
+  display: none;
+}
+
+#interface {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding:
+    max(env(safe-area-inset-top), 18px)
+    22px
+    max(env(safe-area-inset-bottom), 22px);
+}
+
+.top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.logo {
+  width: 118px;
+  max-height: 55px;
+  object-fit: contain;
+  object-position: left top;
+  filter: drop-shadow(0 1px 4px #0008);
+}
+
+.top-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 5px black;
+}
+
+.rec {
+  display: none;
+  align-items: center;
+  gap: 7px;
+  color: #ff3939;
+  font-weight: bold;
+}
+
+.rec.active {
+  display: flex;
+}
+
+.rec-dot {
+  width: 9px;
+  height: 9px;
+  background: #ff3030;
+  border-radius: 50%;
+  animation: blink 1s infinite;
+}
+
+@keyframes blink {
+  50% { opacity: .25; }
+}
+
+#timer {
+  font-variant-numeric: tabular-nums;
+}
+
+.bottom {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+.lens-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 25px;
+  pointer-events: auto;
+}
+
+.lens-controls button,
+.actions button {
+  color: white;
+  background: transparent;
+  border: 0;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-shadow: 0 1px 5px black;
+  padding: 12px;
+}
+
+.lens-controls button.selected {
+  border-bottom: 1px solid white;
+}
+
+.camera-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+  width: 100%;
+  pointer-events: auto;
+}
+
+.side-button {
+  width: 48px;
+  height: 48px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid #ffffff88;
+  background: #0005;
+  color: white;
+  font-size: 19px;
+}
+
+#shutter {
+  width: 76px;
+  height: 76px;
+  border: 3px solid white;
+  border-radius: 50%;
+  background: #ffffff22;
+  padding: 6px;
+  box-shadow: 0 2px 12px #0008;
+}
+
+#shutter span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: white;
+  border-radius: 50%;
+}
+
+#shutter.recording span {
+  width: 25px;
+  height: 25px;
+  margin: auto;
+  border-radius: 5px;
+  background: #ff3030;
+}
+
+.actions {
+  display: flex;
+  justify-content: center;
+  gap: 25px;
+  pointer-events: auto;
+}
+
+#status {
+  font-size: 9px;
+  letter-spacing: 2px;
+  color: #ffffffaa;
+  text-align: center;
+  text-shadow: 0 1px 5px black;
+  min-height: 12px;
+}
+
+button:active {
+  opacity: .65;
+}
+
+#fileInput {
+  display: none;
+}
+
+@media (max-height: 650px) {
+  .bottom { gap: 9px; }
+  #shutter { width: 64px; height: 64px; }
+  .side-button { width: 42px; height: 42px; }
+}
+</style>
+</head>
+
+<body>
+
+<video id="video" autoplay playsinline muted></video>
+<canvas id="camera"></canvas>
+
+<div id="interface">
+
+  <div class="top">
+    <img class="logo" src="rewind-logo.png" alt="REWIND">
+
+    <div class="top-right">
+      <div class="rec" id="rec">
+        <span class="rec-dot"></span>
+        REC
+        <span id="timer">00:00</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="bottom">
+
+    <div class="lens-controls">
+      <button class="selected" id="circle">CIRCLE</button>
+      <button id="oval">OVAL</button>
+    </div>
+
+    <div class="camera-controls">
+
+      <button class="side-button" id="switchCamera" aria-label="Switch camera">
+        ↻
+      </button>
+
+      <button id="shutter" aria-label="Capture">
+        <span></span>
+      </button>
+
+      <button class="side-button" id="mode" aria-label="Switch mode">
+        VIDEO
+      </button>
+
+    </div>
+
+    <div class="actions">
+      <button id="openCamera">OPEN CAMERA</button>
+      <button id="save" hidden>SAVE PHOTO</button>
+    </div>
+
+    <div id="status">YOUR MOMENT. REWOUND.</div>
+
+  </div>
+</div>
+
+<script>
+(() => {
+
+const video = document.getElementById('video');
+const canvas = document.getElementById('camera');
+const gl = canvas.getContext('webgl', {
+  alpha: false,
+  antialias: true,
+  preserveDrawingBuffer: true
+});
+
+const status = document.getElementById('status');
+const shutter = document.getElementById('shutter');
+const rec = document.getElementById('rec');
+const timer = document.getElementById('timer');
+
+let stream = null;
+let frontCamera = false;
+let isOval = false;
+let videoMode = false;
+let recording = false;
+let recorder = null;
+let chunks = [];
+let recordingStart = 0;
+let timerInterval = null;
+let animationFrame = null;
+let photoBlob = null;
+
+if (!gl) {
+  status.textContent = 'THIS BROWSER DOES NOT SUPPORT THE CAMERA EFFECT';
+  return;
+}
+
+const vertexShader = `
+attribute vec2 position;
+varying vec2 uv;
+void main() {
+  uv = position * 0.5 + 0.5;
+  gl_Position = vec4(position, 0.0, 1.0);
+}`;
+
+const fragmentShader = `
+precision highp float;
+varying vec2 uv;
+uniform sampler2D cameraTexture;
+uniform vec2 resolution;
+uniform float oval;
+uniform float strength;
+
+void main() {
+
+  vec2 p = (uv - 0.5) * 2.0;
+
+  float aspect = resolution.x / resolution.y;
+
+  // Make the complete lens fit inside the screen.
+  float lensAspect = mix(1.0, 1.48, oval);
+
+  vec2 lens = p;
+  lens.x *= aspect / lensAspect;
+
+  float radius = length(lens);
+
+  if (radius > 0.985) {
+    gl_FragColor = vec4(0.025,0.022,0.020,1.0);
+    return;
+  }
+
+  // Strong radial fisheye distortion.
+  float distortion = 1.0 - strength *
+    (radius * radius) * 0.36;
+
+  vec2 samplePoint = lens * distortion;
+
+  // Convert lens coordinates to camera texture coordinates.
+  samplePoint.x *= lensAspect / aspect;
+
+  vec2 sampleUV = samplePoint * 0.5 + 0.5;
+
+  // Never mirror the front camera.
+  vec3 colour = texture2D(cameraTexture, sampleUV).rgb;
+
+  // Vintage lens vignette.
+  float edge = smoothstep(0.25, 0.99, radius);
+  float vignette = 1.0 - edge * 0.78;
+
+  colour *= vignette;
+
+  // Warm red light leak.
+  float flare = exp(
+    -distance(lens, vec2(0.76, 0.35)) * 5.0
+  );
+
+  colour.r += flare * 0.18;
+  colour.g += flare * 0.045;
+
+  // Faint blue glass reflection.
+  float blue = exp(
+    -distance(lens, vec2(-0.82,-0.25)) * 7.0
+  );
+
+  colour.b += blue * 0.07;
+
+  // Subtle vintage warmth.
+  colour.r *= 1.035;
+  colour.b *= 0.94;
+
+  gl_FragColor = vec4(colour,1.0);
+}`;
+
+function compile(type, source) {
+  const shader = gl.createShader(type);
+  gl.shaderSource(shader,source);
+  gl.compileShader(shader);
+
+  if (!gl.getShaderParameter(shader,gl.COMPILE_STATUS)) {
+    throw new Error(gl.getShaderInfoLog(shader));
+  }
+
+  return shader;
+}
+
+const program = gl.createProgram();
+
+gl.attachShader(program,compile(gl.VERTEX_SHADER,vertexShader));
+gl.attachShader(program,compile(gl.FRAGMENT_SHADER,fragmentShader));
+gl.linkProgram(program);
+
+if (!gl.getProgramParameter(program,gl.LINK_STATUS)) {
+  status.textContent = 'CAMERA EFFECT FAILED TO LOAD';
+  return;
+}
+
+gl.useProgram(program);
+
+const vertices = new Float32Array([
+  -1,-1, 1,-1, -1,1,
+  -1,1, 1,-1, 1,1
+]);
+
+const buffer = gl.createBuffer();
+gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+gl.bufferData(gl.ARRAY_BUFFER,vertices,gl.STATIC_DRAW);
+
+const position = gl.getAttribLocation(program,'position');
+gl.enableVertexAttribArray(position);
+gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+
+const texture = gl.createTexture();
+gl.bindTexture(gl.TEXTURE_2D,texture);
+
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
+gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
+
+const uniforms = {
+  resolution:gl.getUniformLocation(program,'resolution'),
+  oval:gl.getUniformLocation(program,'oval'),
+  strength:gl.getUniformLocation(program,'strength'),
+  texture:gl.getUniformLocation(program,'cameraTexture')
+};
+
+gl.uniform1i(uniforms.texture,0);
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1,2);
+  const width = Math.round(innerWidth*dpr);
+  const height = Math.round(innerHeight*dpr);
+
+  if (canvas.width !== width || canvas.height !== height) {
+    canvas.width = width;
+    canvas.height = height;
+  }
+
+  gl.viewport(0,0,width,height);
+  gl.uniform2f(uniforms.resolution,width,height);
+}
+
+function render() {
+  if (!stream || video.readyState < 2) {
+    animationFrame = requestAnimationFrame(render);
+    return;
+  }
+
+  resize();
+
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D,texture);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+  gl.texImage2D(
+    gl.TEXTURE_2D,0,gl.RGB,
+    gl.RGB,gl.UNSIGNED_BYTE,video
+  );
+
+  gl.uniform1f(uniforms.oval,isOval ? 1.0 : 0.0);
+  gl.uniform1f(uniforms.strength,0.78);
+
+  gl.drawArrays(gl.TRIANGLES,0,6);
+
+  animationFrame = requestAnimationFrame(render);
+}
+
+async function startCamera() {
+  try {
+    if (stream) {
+      stream.getTracks().forEach(track => track.stop());
+    }
+
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio:false,
+      video:{
+        facingMode:frontCamera ? 'user':'environment',
+        width:{ideal:1920},
+        height:{ideal:1080},
+        frameRate:{ideal:30}
+      }
+    });
+
+    video.srcObject = stream;
+    await video.play();
+
+    if (animationFrame) cancelAnimationFrame(animationFrame);
+    render();
+
+    status.textContent = 'CAMERA READY';
+    document.getElementById('openCamera').hidden = true;
+
+  } catch(error) {
+    status.textContent = 'CAMERA ACCESS FAILED — CHECK SAFARI PERMISSIONS';
+  }
+}
+
+function takePhoto() {
+  if (!stream) {
+    status.textContent = 'OPEN CAMERA FIRST';
+    return;
+  }
+
+  // Capture the processed live lens image.
+  const image = canvas.toDataURL('image/jpeg',0.96);
+
+  fetch(image)
+    .then(response => response.blob())
+    .then(blob => {
+      photoBlob = blob;
+      status.textContent = 'PHOTO CAPTURED';
+      document.getElementById('save').hidden = false;
+    });
+}
+
+async function savePhoto() {
+  if (!photoBlob) return;
+
+  const file = new File(
+    [photoBlob],
+    'REWIND-photo.jpg',
+    {type:'image/jpeg'}
+  );
+
+  try {
+    if (navigator.canShare && navigator.canShare({files:[file]})) {
+      await navigator.share({files:[file],title:'REWIND'});
+    } else {
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(photoBlob);
+      link.download = 'REWIND-photo.jpg';
+      link.click();
+      setTimeout(() => URL.revokeObjectURL(link.href),1000);
+    }
+  } catch(error) {
+    status.textContent = 'USE THE SHARE MENU TO SAVE YOUR PHOTO';
+  }
+}
+
+function updateTimer() {
+  const seconds = Math.floor((Date.now()-recordingStart)/1000);
+  const minutes = String(Math.floor(seconds/60)).padStart(2,'0');
+  const remainder = String(seconds%60).padStart(2,'0');
+  timer.textContent = minutes+':'+remainder;
+}
+
+function startRecording() {
+  if (!stream) {
+    status.textContent = 'OPEN CAMERA FIRST';
+    return;
+  }
+
+  if (!canvas.captureStream || !window.MediaRecorder) {
+    status.textContent = 'VIDEO RECORDING IS NOT SUPPORTED HERE';
+    return;
+  }
+
+  try {
+    const outputStream = canvas.captureStream(30);
+    chunks = [];
+
+    const mime = [
+      'video/mp4;codecs=avc1',
+      'video/webm;codecs=vp9',
+      'video/webm'
+    ].find(type => MediaRecorder.isTypeSupported(type));
+
+    recorder = new MediaRecorder(
+      outputStream,
+      mime ? {mimeType:mime} : undefined
+    );
+
+    recorder.ondataavailable = event => {
+      if (event.data.size > 0) chunks.push(event.data);
+    };
+
+    recorder.onstop = () => {
+      const blob = new Blob(chunks,{
+        type:recorder.mimeType || 'video/webm'
+      });
+
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'REWIND-video.' +
+        (blob.type.includes('mp4') ? 'mp4':'webm');
+      link.click();
+
+      setTimeout(() => URL.revokeObjectURL(url),10000);
+    };
+
+    recorder.start(250);
+
+    recording = true;
+    recordingStart = Date.now();
+    rec.classList.add('active');
+    shutter.classList.add('recording');
+    timerInterval = setInterval(updateTimer,250);
+    status.textContent = 'RECORDING';
+
+  } catch(error) {
+    status.textContent = 'COULD NOT START VIDEO RECORDING';
+  }
+}
+
+function stopRecording() {
+  if (!recorder || !recording) return;
+
+  recorder.stop();
+  recording = false;
+
+  rec.classList.remove('active');
+  shutter.classList.remove('recording');
+
+  clearInterval(timerInterval);
+  status.textContent = 'VIDEO SAVED';
+}
+
+shutter.addEventListener('click',() => {
+  if (videoMode) {
+    recording ? stopRecording() : startRecording();
+  } else {
+    takePhoto();
+  }
+});
+
+document.getElementById('switchCamera').onclick = async () => {
+  frontCamera = !frontCamera;
+  await startCamera();
+};
+
+document.getElementById('circle').onclick = () => {
+  isOval = false;
+  gl.uniform1f(uniforms.oval,0);
+  document.getElementById('circle').classList.add('selected');
+  document.getElementById('oval').classList.remove('selected');
+};
+
+document.getElementById('oval').onclick = () => {
+  isOval = true;
+  gl.uniform1f(uniforms.oval,1);
+  document.getElementById('oval').classList.add('selected');
+  document.getElementById('circle').classList.remove('selected');
+};
+
+document.getElementById('mode').onclick = () => {
+  if (recording) return;
+
+  videoMode = !videoMode;
+  document.getElementById('mode').textContent =
+    videoMode ? 'PHOTO' : 'VIDEO';
+
+  status.textContent =
+    videoMode ? 'VIDEO MODE' : 'PHOTO MODE';
+};
+
+document.getElementById('openCamera').onclick = startCamera;
+document.getElementById('save').onclick = savePhoto;
+
+window.addEventListener('resize',resize);
+
+})();
+</script>
+</body>
+</html>

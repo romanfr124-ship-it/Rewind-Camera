@@ -730,8 +730,10 @@ void main(){
   float aspect = uResolution.x / uResolution.y;
   p.x *= aspect;
 
-  float radiusX = aspect * .94;
-  vec2 lens = vec2(p.x / radiusX, p.y / radiusX);
+  // Keep the fisheye circle sized to the shorter screen dimension.
+  // This prevents the lens from becoming oversized in landscape.
+  float lensRadius = min(aspect,1.0) * .94;
+  vec2 lens = vec2(p.x / lensRadius, p.y / lensRadius);
   float angle = atan(lens.y,lens.x);
   float rawRadius = length(lens);
 
@@ -754,12 +756,14 @@ void main(){
 
   float videoAspect = uVideoResolution.x / uVideoResolution.y;
   vec2 uv = vec2(.5);
+  // Cover the full display in either orientation, cropping only the
+  // longer source dimension instead of shrinking the image and exposing black.
   if(videoAspect > aspect){
     uv.x += warped.x * (aspect/videoAspect) * .5;
     uv.y += warped.y * .5;
   }else{
     uv.x += warped.x * .5;
-    uv.y += warped.y * (videoAspect/aspect) * .5;
+    uv.y += warped.y * (aspect/videoAspect) * .5;
   }
 
   uv = vec2(.5) + (uv-vec2(.5))/uZoom;
@@ -1867,11 +1871,24 @@ shutter.addEventListener("click",event=>{
 
 /* RESIZE */
 
-window.addEventListener("resize",resizeCanvas);
+// Recalculate the drawing surface after every viewport/orientation change.
+let resizeFrame = null;
 
-window.addEventListener("orientationchange",()=>{
-  setTimeout(resizeCanvas,250);
-});
+function scheduleCanvasResize(){
+  cancelAnimationFrame(resizeFrame);
+  resizeFrame = requestAnimationFrame(()=>{
+    resizeCanvas();
+    // iOS Safari can update its viewport dimensions a moment after rotation.
+    setTimeout(resizeCanvas,180);
+  });
+}
+
+window.addEventListener("resize",scheduleCanvasResize);
+window.addEventListener("orientationchange",scheduleCanvasResize);
+
+if(window.visualViewport){
+  window.visualViewport.addEventListener("resize",scheduleCanvasResize);
+}
 
 /* CLEANUP */
 

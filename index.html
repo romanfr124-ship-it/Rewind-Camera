@@ -745,9 +745,9 @@ void main(){
   float circleMapped = r + .34 * pow(r,4.0) * (1.0-r);
   vec2 circleWarped = direction * circleMapped;
 
-  float radial = length(p);
-  vec2 screenDirection = radial > .0001 ? p / radial : vec2(0.0);
-  vec2 fullWarped = screenDirection * (radial * (1.0-.16*pow(radial,2.0)));
+  // Full Frame uses a straight, rectilinear image with no fisheye warp.
+  // Circle mode keeps its original optical mapping.
+  vec2 fullWarped = p;
 
   // Smoothly morph the actual lens mapping instead of switching abruptly.
   vec2 warped = mix(circleWarped,fullWarped,uShape);
@@ -768,27 +768,27 @@ void main(){
     return;
   }
 
-  float aberration = pow(min(r,1.0),3.0)*.006;
+  float aberration = pow(min(r,1.0),3.0)*.006*(1.0-uShape);
   vec2 offset = direction*aberration;
   float red = texture2D(uVideo,clamp(uv+offset,vec2(.001),vec2(.999))).r;
   float green = texture2D(uVideo,uv).g;
   float blue = texture2D(uVideo,clamp(uv-offset,vec2(.001),vec2(.999))).b;
   vec3 colour = vec3(red,green,blue);
 
-  float centreGlow = 1.0 + .10*exp(-r*r*4.0);
+  float centreGlow = mix(1.0,1.0 + .10*exp(-r*r*4.0),1.0-uShape);
   float circleFalloff =
       (1.0-.28*smoothstep(.25,1.0,r))
     * (1.0-.48*smoothstep(.62,1.0,r));
   float opticalFalloff = mix(circleFalloff,1.0,uShape);
-  float directionalLight = 1.0-.09*smoothstep(-.4,1.0,lens.y);
+  float directionalLight = mix(1.0,1.0-.09*smoothstep(-.4,1.0,lens.y),1.0-uShape);
   colour *= centreGlow*directionalLight*opticalFalloff;
 
-  colour.r *= 1.035;
-  colour.g *= 1.005;
-  colour.b *= .965;
+  colour.r *= mix(1.0,1.035,1.0-uShape);
+  colour.g *= mix(1.0,1.005,1.0-uShape);
+  colour.b *= mix(1.0,.965,1.0-uShape);
 
   float grain = fract(sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))*43758.5453);
-  colour += (grain-.5)*.025;
+  colour += (grain-.5)*.025*(1.0-uShape);
 
   float redRing = exp(-pow((r-.974)/.0045,2.0));
   float greenRing = exp(-pow((r-.990)/.0045,2.0));

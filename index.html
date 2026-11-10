@@ -1198,6 +1198,56 @@ document.addEventListener("touchcancel",()=>{
   lensSwipeActive = false;
 },{passive:true});
 
+/* PINCH-TO-ZOOM
+   Two-finger pinch on the live preview adjusts the same zoom value
+   used by the slider and the camera shader. */
+let pinchStartDistance = 0;
+let pinchStartZoom = 1;
+let pinching = false;
+
+function getTouchDistance(touches){
+  const dx = touches[0].clientX-touches[1].clientX;
+  const dy = touches[0].clientY-touches[1].clientY;
+  return Math.hypot(dx,dy);
+}
+
+canvas.addEventListener("touchstart",event=>{
+  if(event.touches.length!==2 || !cameraReady) return;
+
+  event.preventDefault();
+  pinching = true;
+  lensSwipeActive = false;
+  pinchStartDistance = Math.max(1,getTouchDistance(event.touches));
+  pinchStartZoom = zoomLevel;
+},{passive:false});
+
+canvas.addEventListener("touchmove",event=>{
+  if(!pinching || event.touches.length!==2) return;
+
+  event.preventDefault();
+
+  const distance = getTouchDistance(event.touches);
+  const scale = distance/pinchStartDistance;
+  const minimum = lensShape===1 ? .5 : 1;
+
+  zoomLevel = Math.max(minimum,Math.min(3,pinchStartZoom*scale));
+  zoomLevel = Math.round(zoomLevel*10)/10;
+  updateZoomInterface();
+},{passive:false});
+
+function finishPinch(event){
+  if(pinching && event.touches.length<2){
+    pinching = false;
+    pinchStartDistance = 0;
+  }
+}
+
+canvas.addEventListener("touchend",finishPinch,{passive:true});
+canvas.addEventListener("touchcancel",()=>{
+  pinching = false;
+  pinchStartDistance = 0;
+},{passive:true});
+
 /* ZOOM */
 
 function updateZoomInterface(){

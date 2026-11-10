@@ -975,6 +975,22 @@ function render(now=0){
   animationFrame = requestAnimationFrame(render);
 }
 
+/* AUDIO CAPTURE
+   Prefer a clean, high-resolution microphone signal where supported.
+   These are ideal preferences so unsupported settings won't block camera startup. */
+const AUDIO_CAPTURE_CONSTRAINTS = {
+  channelCount:{ideal:2},
+  sampleRate:{ideal:48000},
+  echoCancellation:{ideal:false},
+  noiseSuppression:{ideal:false},
+  autoGainControl:{ideal:false}
+};
+
+const VIDEO_RECORDER_OPTIONS = {
+  audioBitsPerSecond:192000,
+  videoBitsPerSecond:8000000
+};
+
 /* CAMERA */
 
 async function startCamera(){
@@ -992,7 +1008,7 @@ async function startCamera(){
     }
 
     cameraStream = await navigator.mediaDevices.getUserMedia({
-      audio:true,
+      audio:AUDIO_CAPTURE_CONSTRAINTS,
       video:{
         facingMode:{ideal:"environment"},
         width:{ideal:1920},
@@ -1083,7 +1099,7 @@ async function switchPhysicalCamera(deviceId,isUltraWide){
 
   try {
     const nextStream = await navigator.mediaDevices.getUserMedia({
-      audio:true,
+      audio:AUDIO_CAPTURE_CONSTRAINTS,
       video:{
         deviceId:{exact:deviceId},
         width:{ideal:1920},
@@ -1510,7 +1526,7 @@ function startNormalVideo(){
 
     recorder = new MediaRecorder(
       stream,
-      mimeType ? {mimeType} : {}
+      {...VIDEO_RECORDER_OPTIONS,...(mimeType ? {mimeType} : {})}
     );
 
     recordedChunks = [];
@@ -1591,7 +1607,7 @@ async function startSlowMotion(){
 
     const sourceRecorder = new MediaRecorder(
       sourceStream,
-      mimeType ? {mimeType} : {}
+      {...VIDEO_RECORDER_OPTIONS,...(mimeType ? {mimeType} : {})}
     );
 
     const sourceChunks = [];
@@ -1731,7 +1747,7 @@ async function processSlowMotion(sourceBlob){
 
     outputRecorder = new MediaRecorder(
       outputStream,
-      outputMime ? {mimeType:outputMime} : {}
+      {...VIDEO_RECORDER_OPTIONS,...(outputMime ? {mimeType:outputMime} : {})}
     );
 
     outputChunks = [];

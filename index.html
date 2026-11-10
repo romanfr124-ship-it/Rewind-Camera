@@ -81,12 +81,15 @@ body {
 }
 
 .logo.full-frame {
+  /* Original artwork is white on black: invert it, then screen away
+     the white background so only black lettering and its white outline remain. */
   filter:
-    brightness(0)
+    invert(1)
     drop-shadow(1px 0 0 white)
     drop-shadow(-1px 0 0 white)
     drop-shadow(0 1px 0 white)
     drop-shadow(0 -1px 0 white);
+  mix-blend-mode:screen;
 }
 
 /* RECORDING */
@@ -720,7 +723,7 @@ void main(){
   // This follows the same irregular edge as the lens itself.
   if(uShape < .5 && r > 1.0){
     float halo = 1.0 - smoothstep(1.0,1.055,r);
-    float haloStrength = halo * .18;
+    float haloStrength = halo * .045;
     vec3 blueHalo = vec3(.015,.075,.30) * haloStrength;
 
     gl_FragColor = vec4(blueHalo,1.0);
@@ -838,7 +841,7 @@ void main(){
     // Subtle blue optical coating around the entire fisheye perimeter.
     // Applied after the edge fade so the blue tint remains visible.
     float blueEdge = exp(-pow((r-.978)/.022,2.0));
-    float blueStrength = blueEdge * .28;
+    float blueStrength = blueEdge * .065;
 
     colour = mix(
       colour,
@@ -846,15 +849,8 @@ void main(){
       blueStrength
     );
 
-    colour.b += blueEdge*.10;
+    colour.b += blueEdge*.025;
 
-  }else{
-
-    float redLine = exp(-pow((vUv.x-.125)/.0018,2.0));
-    float greenLine = exp(-pow((vUv.x-.135)/.0018,2.0));
-
-    colour.r += redLine * .10;
-    colour.g += greenLine * .07;
   }
 
   gl_FragColor = vec4(colour,1.0);

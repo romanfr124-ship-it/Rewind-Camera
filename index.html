@@ -730,22 +730,25 @@ void main(){
   float aspect = uResolution.x / uResolution.y;
   p.x *= aspect;
 
-  // Keep the fisheye circle sized to the shorter screen dimension.
-  // This prevents the lens from becoming oversized in landscape.
-  float lensRadius = min(aspect,1.0) * .94;
-  vec2 lens = vec2(p.x / lensRadius, p.y / lensRadius);
+  // Normalize the lens to the whole viewport, not a fixed circle.
+  // The radial mapping therefore adapts to portrait, landscape and
+  // different device aspect ratios without clipping or black side areas.
+  vec2 lens = vec2(p.x / aspect,p.y);
   float angle = atan(lens.y,lens.x);
   float rawRadius = length(lens);
+  float cornerRadius = 1.41421356;
+  float normalizedRadius = rawRadius / cornerRadius;
 
   float edgeDistortion =
       sin(angle * 5.0 + .4) * .004
     + sin(angle * 9.0 + 1.2) * .0025
     + sin(angle * 13.0 + 2.1) * .0012;
-  float r = rawRadius / (1.0 + edgeDistortion);
+  float r = normalizedRadius / (1.0 + edgeDistortion);
 
   vec2 direction = rawRadius > .0001 ? lens / rawRadius : vec2(0.0);
   float circleMapped = r + .34 * pow(r,4.0) * (1.0-r);
-  vec2 circleWarped = direction * circleMapped;
+  vec2 mappedLens = direction * circleMapped * cornerRadius;
+  vec2 circleWarped = vec2(mappedLens.x * aspect,mappedLens.y);
 
   // Full Frame uses a straight, rectilinear image with no fisheye warp.
   // Circle mode keeps its original optical mapping.
@@ -794,24 +797,12 @@ void main(){
   float grain = fract(sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))*43758.5453);
   colour += (grain-.5)*.025*(1.0-uShape);
 
-  float redRing = exp(-pow((r-.974)/.0045,2.0));
-  float greenRing = exp(-pow((r-.990)/.0045,2.0));
-  colour.r += redRing*.13*(1.0-uShape);
-  colour.g += greenRing*.085*(1.0-uShape);
-
-  float circleMask = 1.0-smoothstep(.994,1.0,r);
-  colour *= mix(circleMask,1.0,uShape);
-
-  float blueEdge = exp(-pow((r-.978)/.022,2.0));
-  float blueStrength = blueEdge*.065*(1.0-uShape);
+  // Keep a restrained cool edge character without drawing a circular
+  // mask: the fisheye image now fills the complete device viewport.
+  float blueEdge = exp(-pow((r-.91)/.075,2.0));
+  float blueStrength = blueEdge*.035*(1.0-uShape);
   colour = mix(colour,vec3(.035,.16,.48),blueStrength);
-  colour.b += blueEdge*.025*(1.0-uShape);
-
-  // The circular edge and its halo fade away continuously during the morph.
-  float outsideCircle = smoothstep(1.0,1.055,r)*(1.0-uShape);
-  float halo = (1.0-smoothstep(1.0,1.055,r))*.045*(1.0-uShape);
-  vec3 haloColour = vec3(.015,.075,.30)*halo;
-  colour = mix(colour,haloColour,outsideCircle);
+  colour.b += blueEdge*.012*(1.0-uShape);
 
   gl_FragColor = vec4(colour,1.0);
 }`;

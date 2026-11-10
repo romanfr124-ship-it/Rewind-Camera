@@ -744,7 +744,8 @@ void main(){
   float r = rawRadius / (1.0 + edgeDistortion);
 
   vec2 direction = rawRadius > .0001 ? lens / rawRadius : vec2(0.0);
-  float circleMapped = r + .34 * pow(r,4.0) * (1.0-r);
+  // Stronger edge expansion gives the lens a wider, more pronounced fisheye look.
+  float circleMapped = r + .55 * pow(r,3.0) * (1.0-r);
   vec2 circleWarped = direction * circleMapped * lensRadius;
 
   // Full Frame uses a straight, rectilinear image with no fisheye warp.
@@ -918,7 +919,7 @@ function render(now=0){
     const activeShape = slowProcessing ? slowLensShape : displayLensShape;
     const selectedZoom = slowProcessing ? slowZoomLevel : zoomLevel;
     const activeUltraWide = slowProcessing ? slowLensShape===1 && ultraWideActive : ultraWideActive;
-    const activeZoom = selectedZoom * (activeUltraWide ? 1.4 : 1.0);
+    const activeZoom = selectedZoom * (activeUltraWide && activeShape > 0.5 ? 1.4 : 1.0);
 
     gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
 
@@ -1129,7 +1130,9 @@ function setLens(shape){
 
   // Start the physical lens change independently. The visual morph keeps
   // running while Safari prepares the new camera stream.
-  if(shape===1 && ultraWideCameraDeviceId){
+  if(ultraWideCameraDeviceId){
+    // Use the wider physical lens for Circle mode too, when Safari exposes it.
+    // Full Frame applies its existing 1.4x crop; Circle keeps the full wide view.
     switchPhysicalCamera(ultraWideCameraDeviceId,true).then(switched=>{
       if(!switched) showStatus("ULTRA-WIDE LENS COULD NOT BE SELECTED");
     });

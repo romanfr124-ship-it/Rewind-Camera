@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +10,8 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="REWIND">
-
 <title>REWIND</title>
+
 <style>
 :root {
   --black: #050505;
@@ -41,7 +42,6 @@ body {
   inset: 0;
 }
 
-/* LIVE CAMERA */
 #cameraCanvas {
   position: absolute;
   inset: 0;
@@ -113,7 +113,7 @@ body {
   50% { opacity: .25; }
 }
 
-/* LENS SHAPE CONTROLS */
+/* LENS CONTROLS */
 .lens-controls {
   position: absolute;
   z-index: 5;
@@ -184,7 +184,7 @@ body {
   -webkit-backdrop-filter: blur(8px);
 }
 
-/* SHUTTER BUTTON */
+/* SHUTTER */
 #shutter {
   width: 78px;
   height: 78px;
@@ -215,7 +215,6 @@ body {
   transition: all .18s ease;
 }
 
-/* RED RECORDING CENTRE */
 #shutter.recording .inner {
   width: 27px;
   height: 27px;
@@ -223,7 +222,6 @@ body {
   background: var(--red);
 }
 
-/* HOLD PROGRESS */
 #shutter.holding::after {
   content: "";
   position: absolute;
@@ -357,10 +355,11 @@ body {
 </head>
 
 <body>
+
 <video id="cameraVideo" autoplay muted playsinline></video>
 <canvas id="cameraCanvas"></canvas>
 
-<!-- BUILT-IN REWIND LOGO -->
+<!-- REWIND LOGO -->
 <svg class="logo"
      style="position:absolute;z-index:6;top:calc(env(safe-area-inset-top) + 20px);left:22px;"
      viewBox="0 0 100 85"
@@ -369,14 +368,11 @@ body {
 
   <polygon points="43,9 18,30 43,51"/>
   <polygon points="78,9 53,30 78,51"/>
-
-  <path class="underline"
-        d="M12 65 Q48 79 88 61"/>
+  <path class="underline" d="M12 65 Q48 79 88 61"/>
 </svg>
 
 <div class="top">
   <div></div>
-
   <div class="recording-label" id="recordingLabel">
     <span class="recording-dot"></span>
     <span id="recordingTime">REC 00:00</span>
@@ -385,26 +381,15 @@ body {
 
 <!-- LENS OPTIONS -->
 <div class="lens-controls">
-  <button class="small-control active" id="circleButton">
-    CIRCLE
-  </button>
-
-  <button class="small-control" id="ovalButton">
-    OVAL
-  </button>
+  <button class="small-control active" id="circleButton">CIRCLE</button>
+  <button class="small-control" id="ovalButton">OVAL</button>
 </div>
 
 <!-- SHUTTER -->
 <div class="bottom">
   <div class="camera-controls">
-    <button class="flip-button"
-            id="flipButton"
-            aria-label="Switch camera">
-      ↻
-    </button>
-
-    <button id="shutter"
-            aria-label="Take photo or record video">
+    <button class="flip-button" id="flipButton" aria-label="Switch camera">↻</button>
+    <button id="shutter" aria-label="Take photo or record video">
       <span class="inner"></span>
     </button>
   </div>
@@ -413,22 +398,18 @@ body {
     TAP PHOTO · HOLD 2 SECONDS TO RECORD
   </div>
 
-  <div class="tagline">
-    YOUR MOMENT. REWOUND.
-  </div>
+  <div class="tagline">YOUR MOMENT. REWOUND.</div>
 </div>
 
 <div id="statusMessage"></div>
 
-<!-- CAMERA START SCREEN -->
+<!-- START SCREEN -->
 <div id="startScreen">
   <svg class="start-logo"
        viewBox="0 0 100 85"
        xmlns="http://www.w3.org/2000/svg">
-
     <polygon points="43,9 18,30 43,51" fill="white"/>
     <polygon points="78,9 53,30 78,51" fill="white"/>
-
     <path d="M12 65 Q48 79 88 61"
           fill="none"
           stroke="white"
@@ -447,9 +428,7 @@ body {
 
 <script>
 
-/* ========================================
-   REWIND CAMERA ENGINE
-======================================== */
+/* REWIND CAMERA ENGINE */
 
 const video = document.getElementById("cameraVideo");
 const canvas = document.getElementById("cameraCanvas");
@@ -491,9 +470,7 @@ let animationFrame = null;
 let texture = null;
 let program = null;
 
-/* ========================================
-   SHADERS
-======================================== */
+/* SHADERS */
 
 const vertexShaderSource = `
 attribute vec2 position;
@@ -525,19 +502,16 @@ void main() {
 
   /*
     LENS SIZE
-    Horizontal width remains at approximately
-    82% of the screen width.
-
-    Equal radii make the circle genuinely round
-    on a portrait phone screen.
+    94% of screen width.
+    The circle uses equal radii.
+    The oval is proportionally wider.
   */
 
-  float radiusX = aspect * 0.82;
+  float radiusX = aspect * 0.94;
   float radiusY = radiusX;
 
-  // Oval mode is wider and shorter.
   if (uShape > 0.5) {
-    radiusY = aspect * 0.62;
+    radiusY = aspect * 0.71;
   }
 
   vec2 lens = vec2(
@@ -547,14 +521,12 @@ void main() {
 
   float distanceFromCentre = length(lens);
 
-  // Smooth black lens boundary.
   float edge = 1.0 - smoothstep(
     0.985,
     1.0,
     distanceFromCentre
   );
 
-  // Fisheye barrel distortion.
   float distortion =
     1.0 - uStrength *
     distanceFromCentre *
@@ -563,7 +535,6 @@ void main() {
 
   vec2 warped = lens * distortion;
 
-  // Crop the camera feed to preserve its aspect ratio.
   float videoAspect =
     uVideoResolution.x / uVideoResolution.y;
 
@@ -583,7 +554,6 @@ void main() {
     samplePoint
   ).rgb;
 
-  // Vintage edge shading.
   float vignette = smoothstep(
     1.0,
     0.35,
@@ -592,12 +562,10 @@ void main() {
 
   colour *= mix(0.70, 1.0, vignette);
 
-  // Subtle vintage colour character.
   colour.r *= 1.035;
   colour.g *= 1.005;
   colour.b *= 0.965;
 
-  // Subtle film grain.
   float grain = fract(
     sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233)))
     * 43758.5453
@@ -605,7 +573,6 @@ void main() {
 
   colour += (grain - 0.5) * 0.018;
 
-  // One continuous camera image.
   gl_FragColor = vec4(
     mix(vec3(0.0), colour, edge),
     1.0
@@ -613,9 +580,7 @@ void main() {
 }
 `;
 
-/* ========================================
-   WEBGL SETUP
-======================================== */
+/* WEBGL SETUP */
 
 function createShader(type, source) {
 
@@ -645,9 +610,7 @@ function setupWebGL() {
     fragmentShaderSource
   );
 
-  if (!vertexShader || !fragmentShader) {
-    return false;
-  }
+  if (!vertexShader || !fragmentShader) return false;
 
   program = gl.createProgram();
 
@@ -671,11 +634,7 @@ function setupWebGL() {
 
   const buffer = gl.createBuffer();
   gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-  gl.bufferData(
-    gl.ARRAY_BUFFER,
-    vertices,
-    gl.STATIC_DRAW
-  );
+  gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
   const positionLocation =
     gl.getAttribLocation(program, "position");
@@ -692,74 +651,36 @@ function setupWebGL() {
   );
 
   texture = gl.createTexture();
-
   gl.bindTexture(gl.TEXTURE_2D, texture);
 
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_WRAP_S,
-    gl.CLAMP_TO_EDGE
-  );
-
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_WRAP_T,
-    gl.CLAMP_TO_EDGE
-  );
-
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_MIN_FILTER,
-    gl.LINEAR
-  );
-
-  gl.texParameteri(
-    gl.TEXTURE_2D,
-    gl.TEXTURE_MAG_FILTER,
-    gl.LINEAR
-  );
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
 
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
 
   return true;
 }
 
-/* ========================================
-   CANVAS RESIZING
-======================================== */
+/* CANVAS RESIZING */
 
 function resizeCanvas() {
 
-  const dpr = Math.min(
-    window.devicePixelRatio || 1,
-    2
-  );
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-  canvas.width = Math.floor(
-    window.innerWidth * dpr
-  );
-
-  canvas.height = Math.floor(
-    window.innerHeight * dpr
-  );
+  canvas.width = Math.floor(window.innerWidth * dpr);
+  canvas.height = Math.floor(window.innerHeight * dpr);
 
   if (gl) {
-    gl.viewport(
-      0,
-      0,
-      canvas.width,
-      canvas.height
-    );
+    gl.viewport(0, 0, canvas.width, canvas.height);
   }
 }
 
 window.addEventListener("resize", resizeCanvas);
-
 resizeCanvas();
 
-/* ========================================
-   LIVE CAMERA RENDERING
-======================================== */
+/* CAMERA RENDERING */
 
 function render() {
 
@@ -771,7 +692,6 @@ function render() {
     gl.bindTexture(gl.TEXTURE_2D, texture);
 
     try {
-
       gl.texImage2D(
         gl.TEXTURE_2D,
         0,
@@ -780,7 +700,6 @@ function render() {
         gl.UNSIGNED_BYTE,
         video
       );
-
     } catch (error) {}
 
     gl.uniform2f(
@@ -805,29 +724,20 @@ function render() {
       lensShape
     );
 
-    gl.drawArrays(
-      gl.TRIANGLE_STRIP,
-      0,
-      4
-    );
+    gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   }
 
   animationFrame = requestAnimationFrame(render);
 }
 
-/* ========================================
-   START CAMERA
-======================================== */
+/* START CAMERA */
 
 async function startCamera() {
 
   errorMessage.textContent = "";
   startButton.textContent = "OPENING CAMERA...";
 
-  if (
-    !navigator.mediaDevices ||
-    !navigator.mediaDevices.getUserMedia
-  ) {
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
     errorMessage.textContent =
       "Camera access requires HTTPS. Open REWIND through Safari.";
     startButton.textContent = "TRY AGAIN";
@@ -837,14 +747,11 @@ async function startCamera() {
   try {
 
     if (cameraStream) {
-      cameraStream.getTracks().forEach(
-        track => track.stop()
-      );
+      cameraStream.getTracks().forEach(track => track.stop());
     }
 
     cameraStream = await navigator.mediaDevices.getUserMedia({
       audio: false,
-
       video: {
         facingMode: { ideal: facingMode },
         width: { ideal: 1920 },
@@ -853,27 +760,20 @@ async function startCamera() {
     });
 
     video.srcObject = cameraStream;
-
     await video.play();
 
     cameraReady = true;
 
     if (!program) {
-
       const success = setupWebGL();
-
-      if (!success) {
-        throw new Error("WebGL setup failed");
-      }
+      if (!success) throw new Error("WebGL setup failed");
     }
 
     startScreen.style.display = "none";
 
     resizeCanvas();
 
-    if (animationFrame) {
-      cancelAnimationFrame(animationFrame);
-    }
+    if (animationFrame) cancelAnimationFrame(animationFrame);
 
     render();
 
@@ -884,8 +784,7 @@ async function startCamera() {
     let message = "Unable to access the camera.";
 
     if (error.name === "NotAllowedError") {
-      message =
-        "Camera permission denied. Allow camera access in your iPhone settings.";
+      message = "Camera permission denied. Allow camera access in your iPhone settings.";
     }
 
     if (error.name === "NotFoundError") {
@@ -903,37 +802,24 @@ async function startCamera() {
 
 startButton.addEventListener("click", startCamera);
 
-/* ========================================
-   SWITCH CAMERA
-======================================== */
+/* SWITCH CAMERA */
 
-document.getElementById("flipButton").addEventListener(
-  "click",
-  async () => {
+document.getElementById("flipButton").addEventListener("click", async () => {
 
-    if (recording) {
-      showStatus("STOP RECORDING FIRST");
-      return;
-    }
-
-    facingMode =
-      facingMode === "environment"
-        ? "user"
-        : "environment";
-
-    await startCamera();
+  if (recording) {
+    showStatus("STOP RECORDING FIRST");
+    return;
   }
-);
 
-/* ========================================
-   CIRCLE / OVAL
-======================================== */
+  facingMode = facingMode === "environment" ? "user" : "environment";
 
-const circleButton =
-  document.getElementById("circleButton");
+  await startCamera();
+});
 
-const ovalButton =
-  document.getElementById("ovalButton");
+/* CIRCLE / OVAL */
+
+const circleButton = document.getElementById("circleButton");
+const ovalButton = document.getElementById("ovalButton");
 
 circleButton.addEventListener("click", () => {
 
@@ -951,9 +837,7 @@ ovalButton.addEventListener("click", () => {
   circleButton.classList.remove("active");
 });
 
-/* ========================================
-   STATUS MESSAGES
-======================================== */
+/* STATUS */
 
 let statusTimeout;
 
@@ -969,9 +853,7 @@ function showStatus(message) {
   }, 2200);
 }
 
-/* ========================================
-   TAKE PHOTO
-======================================== */
+/* TAKE PHOTO */
 
 async function takePhoto() {
 
@@ -997,9 +879,7 @@ async function takePhoto() {
   }, "image/jpeg", 0.94);
 }
 
-/* ========================================
-   SAVE PHOTO OR VIDEO
-======================================== */
+/* SAVE PHOTO OR VIDEO */
 
 async function saveFile(file) {
 
@@ -1021,15 +901,12 @@ async function saveFile(file) {
 
   } catch (error) {
 
-    if (error.name === "AbortError") {
-      return;
-    }
+    if (error.name === "AbortError") return;
 
     console.warn(error);
   }
 
   const url = URL.createObjectURL(file);
-
   const link = document.createElement("a");
 
   link.href = url;
@@ -1039,23 +916,16 @@ async function saveFile(file) {
   link.click();
   link.remove();
 
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 15000);
+  setTimeout(() => URL.revokeObjectURL(url), 15000);
 }
 
-/* ========================================
-   START VIDEO RECORDING
-======================================== */
+/* START VIDEO RECORDING */
 
 function startRecording() {
 
   if (!cameraReady || recording) return;
 
-  if (
-    !canvas.captureStream ||
-    !window.MediaRecorder
-  ) {
+  if (!canvas.captureStream || !window.MediaRecorder) {
     showStatus("VIDEO RECORDING NOT SUPPORTED");
     return;
   }
@@ -1075,22 +945,16 @@ function startRecording() {
     let options = {};
 
     for (const type of mimeTypes) {
-
-      if (
-        MediaRecorder.isTypeSupported &&
-        MediaRecorder.isTypeSupported(type)
-      ) {
+      if (MediaRecorder.isTypeSupported && MediaRecorder.isTypeSupported(type)) {
         options.mimeType = type;
         break;
       }
     }
 
     recorder = new MediaRecorder(stream, options);
-
     recordedChunks = [];
 
     recorder.ondataavailable = (event) => {
-
       if (event.data && event.data.size > 0) {
         recordedChunks.push(event.data);
       }
@@ -1098,18 +962,10 @@ function startRecording() {
 
     recorder.onstop = async () => {
 
-      const mimeType =
-        recorder.mimeType || "video/webm";
+      const mimeType = recorder.mimeType || "video/webm";
+      const extension = mimeType.includes("mp4") ? "mp4" : "webm";
 
-      const extension =
-        mimeType.includes("mp4")
-          ? "mp4"
-          : "webm";
-
-      const blob = new Blob(
-        recordedChunks,
-        { type: mimeType }
-      );
+      const blob = new Blob(recordedChunks, { type: mimeType });
 
       const file = new File(
         [blob],
@@ -1117,18 +973,12 @@ function startRecording() {
         { type: mimeType }
       );
 
-      stream.getTracks().forEach(
-        track => track.stop()
-      );
+      stream.getTracks().forEach(track => track.stop());
 
       if (blob.size > 0) {
-
         await saveFile(file);
-
         showStatus("VIDEO READY TO SAVE");
-
       } else {
-
         showStatus("VIDEO COULD NOT BE SAVED");
       }
 
@@ -1143,29 +993,22 @@ function startRecording() {
     shutter.classList.add("recording");
     recordingLabel.classList.add("active");
 
-    instruction.textContent =
-      "TAP AGAIN TO STOP RECORDING";
+    instruction.textContent = "TAP AGAIN TO STOP RECORDING";
 
     updateRecordingClock();
 
-    recordingClock = setInterval(
-      updateRecordingClock,
-      250
-    );
+    recordingClock = setInterval(updateRecordingClock, 250);
 
   } catch (error) {
 
     console.error(error);
-
     recording = false;
 
     showStatus("COULD NOT START RECORDING");
   }
 }
 
-/* ========================================
-   STOP VIDEO RECORDING
-======================================== */
+/* STOP RECORDING */
 
 function stopRecording() {
 
@@ -1178,25 +1021,20 @@ function stopRecording() {
   shutter.classList.remove("recording");
   recordingLabel.classList.remove("active");
 
-  instruction.textContent =
-    "TAP PHOTO · HOLD 2 SECONDS TO RECORD";
+  instruction.textContent = "TAP PHOTO · HOLD 2 SECONDS TO RECORD";
 
   if (recorder.state !== "inactive") {
     recorder.stop();
   }
 }
 
-/* ========================================
-   RECORDING TIMER
-======================================== */
+/* RECORDING TIMER */
 
 function updateRecordingClock() {
 
   if (!recording) return;
 
-  const seconds = Math.floor(
-    (Date.now() - recordingStartedAt) / 1000
-  );
+  const seconds = Math.floor((Date.now() - recordingStartedAt) / 1000);
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -1208,14 +1046,7 @@ function updateRecordingClock() {
     String(remainingSeconds).padStart(2, "0");
 }
 
-/* ========================================
-   SHUTTER BUTTON
-======================================== */
-
-// Quick tap: photo.
-// Hold for two seconds: begin video.
-// Release: continue recording.
-// Next tap: stop video.
+/* SHUTTER BUTTON */
 
 function shutterDown(event) {
 
@@ -1228,7 +1059,6 @@ function shutterDown(event) {
   } catch (error) {}
 
   if (recording) {
-
     stopWhenReleased = true;
     return;
   }
@@ -1253,11 +1083,8 @@ function shutterUp(event) {
   event.preventDefault();
 
   if (stopWhenReleased) {
-
     stopWhenReleased = false;
-
     stopRecording();
-
     return;
   }
 
@@ -1281,7 +1108,6 @@ function shutterCancel() {
   }
 
   shutter.classList.remove("holding");
-
   stopWhenReleased = false;
 }
 
@@ -1293,28 +1119,19 @@ shutter.addEventListener("contextmenu", event => {
   event.preventDefault();
 });
 
-/* ========================================
-   CLEANUP
-======================================== */
+/* CLEANUP */
 
 window.addEventListener("pagehide", () => {
 
-  if (holdTimer) {
-    clearTimeout(holdTimer);
-  }
+  if (holdTimer) clearTimeout(holdTimer);
 
-  if (recordingClock) {
-    clearInterval(recordingClock);
-  }
+  if (recordingClock) clearInterval(recordingClock);
 
   if (cameraStream) {
-    cameraStream.getTracks().forEach(
-      track => track.stop()
-    );
+    cameraStream.getTracks().forEach(track => track.stop());
   }
 });
 
 </script>
-
 </body>
 </html>

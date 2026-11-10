@@ -516,57 +516,8 @@ body.camera-active .bottom {
   opacity:1;
 }
 
-/* LANDSCAPE */
-
-@media (orientation:landscape) {
-  .top {
-    top:calc(env(safe-area-inset-top) + 8px);
-  }
-
-  .logo {
-    width:110px;
-  }
-
-  .bottom {
-    bottom:calc(env(safe-area-inset-bottom) + 5px);
-  }
-
-  .mode-selector {
-    width:210px;
-    padding:0;
-    gap:3px;
-  }
-
-  #shutter {
-    width:62px;
-    height:62px;
-  }
-
-  #shutter .inner {
-    width:48px;
-    height:48px;
-  }
-
-  #shutter.video-mode .inner,
-  #shutter.slow-mode .inner {
-    width:52px;
-    height:52px;
-  }
-
-  #shutter.video-mode.recording .inner,
-  #shutter.slow-mode.recording .inner {
-    width:34px;
-    height:34px;
-  }
-
-  #zoomButton {
-    left:calc(50% + 49px);
-  }
-
-  #statusMessage {
-    bottom:calc(env(safe-area-inset-bottom) + 90px);
-  }
-}
+/* The camera interface keeps its portrait layout in landscape.
+   Only the live preview changes shape; controls retain their portrait sizing and spacing. */
 
 @media (prefers-reduced-motion:reduce) {
   .mode-name,

@@ -1,5 +1,6 @@
 
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -149,7 +150,6 @@ body { position:fixed; inset:0; }
   gap:15px;
   touch-action:pan-y;
 }
-
 .mode-names {
   width:100%;
   display:flex;
@@ -157,7 +157,6 @@ body { position:fixed; inset:0; }
   align-items:center;
   overflow:visible;
 }
-
 .mode-name {
   flex:1;
   min-width:0;
@@ -182,7 +181,6 @@ body { position:fixed; inset:0; }
   -webkit-appearance:none;
   appearance:none;
 }
-
 .mode-name.active {
   color:white;
   opacity:1;
@@ -228,9 +226,7 @@ body { position:fixed; inset:0; }
 }
 
 /* VIDEO */
-#shutter.video-mode {
-  border-color:var(--red);
-}
+#shutter.video-mode { border-color:var(--red); }
 #shutter.video-mode .inner {
   width:60px;
   height:60px;
@@ -244,9 +240,7 @@ body { position:fixed; inset:0; }
 }
 
 /* SLOW MOTION */
-#shutter.slow-mode {
-  border-color:#d9d9d9;
-}
+#shutter.slow-mode { border-color:#d9d9d9; }
 #shutter.slow-mode .inner {
   width:60px;
   height:60px;
@@ -353,7 +347,6 @@ body { position:fixed; inset:0; }
   .instruction { margin-top:10px; }
   .tagline { margin-top:6px; }
 }
-
 @media (prefers-reduced-motion:reduce) {
   .mode-name,
   #shutter,
@@ -384,14 +377,12 @@ body { position:fixed; inset:0; }
 
 <div class="bottom">
   <div class="camera-controls">
-
     <div class="mode-selector" id="modeSelector">
       <div class="mode-names">
         <button class="mode-name" data-mode="slow">SLOW-MO</button>
         <button class="mode-name active" data-mode="photo">PHOTO</button>
         <button class="mode-name" data-mode="video">VIDEO</button>
       </div>
-
       <div class="shutter-row">
         <button id="shutter" aria-label="Capture">
           <span class="inner"></span>
@@ -399,7 +390,6 @@ body { position:fixed; inset:0; }
       </div>
     </div>
   </div>
-
   <div class="instruction" id="instruction">
     SWIPE TO CHANGE MODE · TAP TO CAPTURE
   </div>
@@ -540,11 +530,19 @@ void main(){
   vec3 colour=vec3(red,green,blue);
 
   float centreGlow=1.0+.10*exp(-r*r*4.0);
-  float edgeFalloff=1.0-.28*smoothstep(.25,1.0,r);
-  float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
-  float vignette=1.0-.48*smoothstep(.62,1.0,r);
 
-  colour*=centreGlow*edgeFalloff*directionalLight*vignette;
+  // Circle retains its optical edge falloff and vignette.
+  // Full Frame receives neither.
+  float circleFalloff=
+      (1.0-.28*smoothstep(.25,1.0,r))
+    * (1.0-.48*smoothstep(.62,1.0,r));
+
+  float opticalFalloff=uShape<.5?circleFalloff:1.0;
+
+  // Keep subtle directional light variation in both modes.
+  float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
+
+  colour*=centreGlow*directionalLight*opticalFalloff;
 
   colour.r*=1.035;
   colour.g*=1.005;
@@ -737,6 +735,7 @@ document.querySelectorAll(".mode-name").forEach(button=>{
   });
 });
 
+/* STATUS */
 function showStatus(message){
   statusMessage.textContent=message;
   statusMessage.classList.add("show");
@@ -813,6 +812,7 @@ function takePhoto(){
   },"image/jpeg",.96);
 }
 
+/* VIDEO FORMAT */
 function supportedMime(){
   const formats=[
     "video/mp4;codecs=avc1.42E01E",
@@ -821,9 +821,11 @@ function supportedMime(){
     "video/webm;codecs=vp8,opus",
     "video/webm"
   ];
+
   return formats.find(type=>MediaRecorder.isTypeSupported(type))||"";
 }
 
+/* RECORDING CLOCK */
 function updateRecordingClock(){
   if(!recording) return;
 
@@ -845,6 +847,7 @@ function endRecordingClock(){
   recordingLabel.classList.remove("active");
 }
 
+/* NORMAL VIDEO */
 function startNormalVideo(){
   if(!cameraReady||recording) return;
 
@@ -895,7 +898,7 @@ function stopNormalVideo(){
   if(recorder.state!=="inactive") recorder.stop();
 }
 
-/* SLOW MOTION */
+/* SLOW MOTION RECORDING */
 async function startSlowMotion(){
   if(!cameraReady||recording||slowProcessing) return;
 
@@ -914,6 +917,7 @@ async function startSlowMotion(){
     );
 
     const sourceChunks=[];
+
     sourceRecorder.ondataavailable=e=>{
       if(e.data?.size) sourceChunks.push(e.data);
     };
@@ -951,6 +955,13 @@ async function startSlowMotion(){
   }
 }
 
+/*
+  SLOW-MOTION EXPORT
+
+  The original recording is replayed at 0.25x.
+  The processed camera canvas is recorded during that
+  entire playback, producing a file with a longer duration.
+*/
 async function processSlowMotion(sourceBlob){
   slowProcessing=true;
   recording=false;
@@ -958,63 +969,147 @@ async function processSlowMotion(sourceBlob){
 
   shutter.classList.add("recording");
   instruction.textContent="PROCESSING 4× SLOW MOTION";
-
   showStatus("PROCESSING SLOW MOTION");
 
   const originalStream=cameraStream;
-  const sourceType=sourceBlob.type||"video/webm";
-  slowSourceUrl=URL.createObjectURL(
-    new Blob([sourceBlob],{type:sourceType})
-  );
+
+  slowSourceUrl=URL.createObjectURL(sourceBlob);
+
+  let outputStream=null;
+  let outputRecorder=null;
+  let outputChunks=[];
 
   try{
+    // Switch the video element from the live camera to the recording.
     video.pause();
     video.srcObject=null;
-    video.src=slowSourceUrl;
+    video.removeAttribute("src");
     video.loop=false;
-    video.playbackRate=.25;
     video.muted=true;
+    video.playsInline=true;
+    video.defaultPlaybackRate=.25;
+    video.playbackRate=.25;
 
     await new Promise((resolve,reject)=>{
-      video.onloadedmetadata=resolve;
-      video.onerror=reject;
+      const loaded=()=>{
+        cleanup();
+        resolve();
+      };
+
+      const failed=()=>{
+        cleanup();
+        reject(new Error("Could not load the recorded video."));
+      };
+
+      const cleanup=()=>{
+        video.removeEventListener("loadedmetadata",loaded);
+        video.removeEventListener("error",failed);
+      };
+
+      video.addEventListener("loadedmetadata",loaded,{once:true});
+      video.addEventListener("error",failed,{once:true});
+
+      video.src=slowSourceUrl;
       video.load();
     });
 
-    await video.play();
+    // Wait for an actual decoded frame.
+    if(video.readyState<video.HAVE_CURRENT_DATA){
+      await new Promise((resolve,reject)=>{
+        const ready=()=>{
+          cleanup();
+          resolve();
+        };
+        const failed=()=>{
+          cleanup();
+          reject(new Error("Could not decode the slow-motion recording."));
+        };
+        const cleanup=()=>{
+          video.removeEventListener("loadeddata",ready);
+          video.removeEventListener("error",failed);
+        };
+        video.addEventListener("loadeddata",ready,{once:true});
+        video.addEventListener("error",failed,{once:true});
+      });
+    }
 
-    const outputStream=canvas.captureStream(30);
+    // Set the slow speed again after metadata has loaded.
+    video.defaultPlaybackRate=.25;
+    video.playbackRate=.25;
+
+    if(!video.captureStream && !canvas.captureStream){
+      throw new Error("Video capture is not supported.");
+    }
+
+    outputStream=canvas.captureStream(30);
+
     const outputMime=supportedMime();
-
-    const outputRecorder=new MediaRecorder(
+    outputRecorder=new MediaRecorder(
       outputStream,
       outputMime?{mimeType:outputMime}:{}
     );
 
-    const outputChunks=[];
+    outputChunks=[];
 
     outputRecorder.ondataavailable=e=>{
       if(e.data?.size) outputChunks.push(e.data);
     };
 
     const finished=new Promise((resolve,reject)=>{
-      outputRecorder.onstop=resolve;
-      outputRecorder.onerror=reject;
+      outputRecorder.addEventListener("stop",resolve,{once:true});
+      outputRecorder.addEventListener("error",event=>{
+        reject(event.error||new Error("Export recording failed."));
+      },{once:true});
     });
 
+    // Register the ended event BEFORE starting playback.
+    const playbackFinished=new Promise((resolve,reject)=>{
+      const ended=()=>{
+        cleanup();
+        resolve();
+      };
+
+      const failed=()=>{
+        cleanup();
+        reject(new Error("Slow-motion playback failed."));
+      };
+
+      const cleanup=()=>{
+        video.removeEventListener("ended",ended);
+        video.removeEventListener("error",failed);
+      };
+
+      video.addEventListener("ended",ended,{once:true});
+      video.addEventListener("error",failed,{once:true});
+    });
+
+    // Start capturing the processed canvas first.
     outputRecorder.start(250);
 
-    await new Promise(resolve=>{
-      video.onended=resolve;
-    });
+    // Give the renderer time to draw the loaded video frame.
+    await new Promise(resolve=>requestAnimationFrame(()=>{
+      requestAnimationFrame(resolve);
+    }));
 
+    // Start slow playback.
+    await video.play();
+
+    // Reapply after play in case Safari resets the rate.
+    video.playbackRate=.25;
+
+    if(Math.abs(video.playbackRate-.25)>.01){
+      throw new Error("This browser is not accepting 4x slow playback.");
+    }
+
+    // Keep recording until the slowed video has fully finished.
+    await playbackFinished;
+
+    // Stop the export recorder only after the entire slowed video.
     if(outputRecorder.state!=="inactive"){
       outputRecorder.stop();
     }
 
     await finished;
-
-    outputStream.getTracks().forEach(track=>track.stop());
 
     const outputType=outputRecorder.mimeType||"video/webm";
     const extension=outputType.includes("mp4")?"mp4":"webm";
@@ -1031,16 +1126,31 @@ async function processSlowMotion(sourceBlob){
     }
 
   }catch(error){
-    console.error(error);
-    showStatus("SLOW MOTION PROCESSING FAILED");
+    console.error("Slow-motion export error:",error);
+    showStatus(error.message||"SLOW MOTION PROCESSING FAILED");
+
+    if(outputRecorder&&outputRecorder.state!=="inactive"){
+      try{outputRecorder.stop();}catch(e){}
+    }
+
   }finally{
+    if(outputStream){
+      outputStream.getTracks().forEach(track=>track.stop());
+    }
+
+    // Restore the original live camera.
     video.pause();
     video.removeAttribute("src");
     video.srcObject=originalStream;
     video.playbackRate=1;
+    video.defaultPlaybackRate=1;
     video.muted=true;
 
-    try{ await video.play(); }catch(e){}
+    try{
+      await video.play();
+    }catch(error){
+      console.error("Camera restore error:",error);
+    }
 
     if(slowSourceUrl){
       URL.revokeObjectURL(slowSourceUrl);
@@ -1054,6 +1164,7 @@ async function processSlowMotion(sourceBlob){
 
 function stopSlowMotion(){
   if(!recording||!recorder) return;
+
   recording=false;
   endRecordingClock();
 
@@ -1090,9 +1201,11 @@ shutter.addEventListener("click",event=>{
   }
 });
 
+/* RESIZE */
 window.addEventListener("resize",resizeCanvas);
 window.addEventListener("orientationchange",()=>setTimeout(resizeCanvas,250));
 
+/* CLEANUP */
 window.addEventListener("pagehide",()=>{
   cancelAnimationFrame(animationFrame);
   clearInterval(recordingClock);
@@ -1101,7 +1214,6 @@ window.addEventListener("pagehide",()=>{
     cameraStream.getTracks().forEach(track=>track.stop());
   }
 });
-
 </script>
 </body>
 </html>

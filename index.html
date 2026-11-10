@@ -1,5 +1,4 @@
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -58,14 +57,14 @@ body {
   pointer-events:none;
 }
 
-/* CENTRED LOGO */
+/* TOP LOGO */
 
 .top {
   position:absolute;
   z-index:5;
-  top:calc(env(safe-area-inset-top) + 20px);
-  left:22px;
-  right:22px;
+  top:calc(env(safe-area-inset-top) + 17px);
+  left:0;
+  right:0;
   display:flex;
   justify-content:center;
   align-items:center;
@@ -77,14 +76,29 @@ body {
   height:auto;
   max-height:70px;
   object-fit:contain;
+  transition:filter .25s ease;
 }
 
+/* Full Frame logo: black lettering with a white outline.
+   The original transparent PNG is retained. */
+
+.logo.full-frame {
+  filter:
+    brightness(0)
+    drop-shadow(1px 0 0 white)
+    drop-shadow(-1px 0 0 white)
+    drop-shadow(0 1px 0 white)
+    drop-shadow(0 -1px 0 white);
+}
+
+/* RECORDING */
+
 .recording-label {
+  position:absolute;
+  right:22px;
   display:none;
   align-items:center;
   gap:8px;
-  position:absolute;
-  right:0;
   font-size:10px;
   font-weight:700;
   letter-spacing:2px;
@@ -115,19 +129,19 @@ body {
   left:50%;
   transform:translateX(-50%);
   display:flex;
-  gap:8px;
+  gap:12px;
 }
 
 .small-control {
-  min-width:65px;
-  padding:9px 14px;
-  border:1px solid rgba(255,255,255,.28);
-  border-radius:30px;
+  min-width:100px;
+  padding:12px 17px;
+  border:1px solid rgba(255,255,255,.25);
+  border-radius:35px;
   background:rgba(0,0,0,.4);
-  color:rgba(255,255,255,.65);
-  font-size:9px;
+  color:rgba(255,255,255,.6);
+  font-size:10px;
   font-weight:700;
-  letter-spacing:1.5px;
+  letter-spacing:2px;
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
 }
@@ -138,14 +152,14 @@ body {
   background:rgba(255,255,255,.12);
 }
 
-/* BOTTOM CAMERA CONTROLS */
+/* BOTTOM CAMERA SYSTEM */
 
 .bottom {
   position:absolute;
   z-index:5;
   left:0;
   right:0;
-  bottom:calc(env(safe-area-inset-bottom) + 30px);
+  bottom:calc(env(safe-area-inset-bottom) + 12px);
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -164,15 +178,17 @@ body {
 /* MODE SELECTOR */
 
 .mode-selector {
-  width:min(290px,88vw);
+  position:relative;
+  width:min(290px, 88vw);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:12px;
+  gap:20px;
   touch-action:pan-y;
 }
 
 .mode-names {
+  position:relative;
   width:100%;
   display:flex;
   justify-content:space-between;
@@ -188,7 +204,7 @@ body {
   background:transparent;
   color:rgba(255,255,255,.29);
   font-family:inherit;
-  font-size:9px;
+  font-size:10px;
   font-weight:700;
   letter-spacing:1.5px;
   text-align:center;
@@ -201,8 +217,8 @@ body {
     transform .38s cubic-bezier(.22,.8,.25,1),
     letter-spacing .32s ease;
   cursor:pointer;
-  -webkit-appearance:none;
   appearance:none;
+  -webkit-appearance:none;
 }
 
 .mode-name.active {
@@ -210,6 +226,82 @@ body {
   opacity:1;
   transform:scale(1.12);
   letter-spacing:2px;
+}
+
+/* ZOOM POPUP */
+
+.zoom-panel {
+  position:absolute;
+  z-index:8;
+  left:50%;
+  bottom:calc(100% + 4px);
+  transform:translate(-50%, 8px);
+  width:min(260px, 78vw);
+  padding:12px 15px 10px;
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:16px;
+  background:rgba(8,8,8,.88);
+  backdrop-filter:blur(14px);
+  -webkit-backdrop-filter:blur(14px);
+  opacity:0;
+  visibility:hidden;
+  pointer-events:none;
+  transition:opacity .2s ease, transform .2s ease, visibility .2s;
+}
+
+.zoom-panel.open {
+  opacity:1;
+  visibility:visible;
+  pointer-events:auto;
+  transform:translate(-50%, 0);
+}
+
+.zoom-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-bottom:9px;
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:2px;
+  color:rgba(255,255,255,.65);
+}
+
+#zoomValue {
+  color:white;
+  font-size:12px;
+  letter-spacing:1px;
+}
+
+#zoomSlider {
+  width:100%;
+  height:4px;
+  margin:0;
+  border-radius:10px;
+  outline:none;
+  appearance:none;
+  -webkit-appearance:none;
+  background:rgba(255,255,255,.35);
+  touch-action:pan-x;
+}
+
+#zoomSlider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:19px;
+  height:19px;
+  border-radius:50%;
+  background:white;
+  border:2px solid #777;
+  box-shadow:0 0 0 4px rgba(255,255,255,.12);
+}
+
+#zoomSlider::-moz-range-thumb {
+  width:16px;
+  height:16px;
+  border-radius:50%;
+  background:white;
+  border:2px solid #777;
 }
 
 /* SHUTTER AND ZOOM BUTTON */
@@ -234,7 +326,7 @@ body {
   position:relative;
   touch-action:pan-y;
   outline:none;
-  transition:border-color .2s,background .2s;
+  transition:border-color .2s, background .2s;
 }
 
 #shutter::before {
@@ -253,6 +345,34 @@ body {
   transition:all .18s ease;
 }
 
+/* ZOOM BUTTON */
+
+#zoomButton {
+  position:absolute;
+  left:calc(50% + 62px);
+  top:50%;
+  transform:translateY(-50%);
+  min-width:65px;
+  padding:11px 10px;
+  border:1px solid rgba(255,255,255,.28);
+  border-radius:25px;
+  background:rgba(0,0,0,.55);
+  color:white;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:1px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:background .2s, border-color .2s;
+}
+
+#zoomButton.active {
+  border-color:white;
+  background:rgba(255,255,255,.15);
+}
+
+/* VIDEO */
+
 #shutter.video-mode {
   border-color:var(--red);
 }
@@ -270,6 +390,8 @@ body {
   border-radius:7px;
 }
 
+/* SLOW MOTION */
+
 #shutter.slow-mode {
   border-color:#d9d9d9;
 }
@@ -286,106 +408,6 @@ body {
   height:38px;
   border-radius:7px;
   background:var(--red);
-}
-
-/* ZOOM BUTTON */
-
-#zoomToggle {
-  position:absolute;
-  left:calc(50% + 66px);
-  top:50%;
-  transform:translateY(-50%);
-  min-width:55px;
-  height:42px;
-  padding:0 10px;
-  border:1px solid rgba(255,255,255,.35);
-  border-radius:25px;
-  background:rgba(0,0,0,.65);
-  color:white;
-  font-size:11px;
-  font-weight:700;
-  letter-spacing:1px;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-  transition:background .2s,border-color .2s;
-}
-
-#zoomToggle.active {
-  border-color:white;
-  background:rgba(255,255,255,.16);
-}
-
-/* ZOOM ADJUSTER */
-
-#zoomPanel {
-  width:100%;
-  display:none;
-  flex-direction:column;
-  gap:8px;
-  padding:10px 15px 5px;
-  animation:zoomAppear .2s ease;
-}
-
-#zoomPanel.open {
-  display:flex;
-}
-
-@keyframes zoomAppear {
-  from {
-    opacity:0;
-    transform:translateY(6px);
-  }
-  to {
-    opacity:1;
-    transform:translateY(0);
-  }
-}
-
-.zoom-heading {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  color:rgba(255,255,255,.65);
-  font-size:9px;
-  font-weight:700;
-  letter-spacing:2px;
-}
-
-#zoomValue {
-  color:white;
-  font-size:12px;
-  letter-spacing:1px;
-}
-
-#zoomSlider {
-  width:100%;
-  height:4px;
-  margin:7px 0;
-  appearance:none;
-  -webkit-appearance:none;
-  border-radius:10px;
-  outline:none;
-  background:rgba(255,255,255,.35);
-  touch-action:pan-x;
-}
-
-#zoomSlider::-webkit-slider-thumb {
-  appearance:none;
-  -webkit-appearance:none;
-  width:20px;
-  height:20px;
-  border-radius:50%;
-  background:white;
-  border:3px solid rgba(0,0,0,.35);
-  box-shadow:0 0 0 3px rgba(255,255,255,.18);
-}
-
-#zoomSlider::-moz-range-thumb {
-  width:15px;
-  height:15px;
-  border-radius:50%;
-  background:white;
-  border:3px solid rgba(0,0,0,.35);
 }
 
 /* START SCREEN */
@@ -440,7 +462,7 @@ body {
 #statusMessage {
   position:absolute;
   z-index:8;
-  bottom:calc(env(safe-area-inset-bottom) + 145px);
+  bottom:calc(env(safe-area-inset-bottom) + 115px);
   left:20px;
   right:20px;
   text-align:center;
@@ -456,9 +478,11 @@ body {
   opacity:1;
 }
 
+/* LANDSCAPE */
+
 @media (orientation:landscape) {
   .top {
-    top:calc(env(safe-area-inset-top) + 10px);
+    top:calc(env(safe-area-inset-top) + 8px);
   }
 
   .logo {
@@ -470,12 +494,12 @@ body {
   }
 
   .bottom {
-    bottom:calc(env(safe-area-inset-bottom) + 12px);
+    bottom:calc(env(safe-area-inset-bottom) + 5px);
   }
 
   .mode-selector {
     width:270px;
-    gap:7px;
+    gap:10px;
   }
 
   #shutter {
@@ -500,41 +524,20 @@ body {
     height:34px;
   }
 
-  #zoomToggle {
-    left:calc(50% + 60px);
-  }
-}
-
-@media (max-height:650px) {
-  .bottom {
-    bottom:calc(env(safe-area-inset-bottom) + 8px);
+  #zoomButton {
+    left:calc(50% + 55px);
   }
 
-  .mode-selector {
-    gap:5px;
-  }
-
-  #shutter {
-    width:64px;
-    height:64px;
-  }
-
-  #shutter .inner {
-    width:48px;
-    height:48px;
-  }
-
-  #shutter.video-mode .inner,
-  #shutter.slow-mode .inner {
-    width:48px;
-    height:48px;
+  #statusMessage {
+    bottom:calc(env(safe-area-inset-bottom) + 90px);
   }
 }
 
 @media (prefers-reduced-motion:reduce) {
   .mode-name,
   #shutter,
-  #shutter .inner {
+  #shutter .inner,
+  .zoom-panel {
     transition:none;
   }
 }
@@ -547,7 +550,12 @@ body {
 <canvas id="cameraCanvas"></canvas>
 
 <header class="top">
-  <img class="logo" src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png" alt="REWIND">
+  <img
+    class="logo"
+    id="mainLogo"
+    src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png"
+    alt="REWIND"
+  >
 
   <div class="recording-label" id="recordingLabel">
     <span class="recording-dot"></span>
@@ -564,22 +572,23 @@ body {
   <div class="camera-controls">
     <div class="mode-selector" id="modeSelector">
 
-      <div id="zoomPanel">
-        <div class="zoom-heading">
-          <span>ZOOM</span>
-          <span id="zoomValue">1.0×</span>
-        </div>
-        <input
-          id="zoomSlider"
-          type="range"
-          min="1"
-          max="3"
-          step="0.1"
-          value="1"
-        >
-      </div>
-
       <div class="mode-names">
+
+        <div class="zoom-panel" id="zoomPanel">
+          <div class="zoom-heading">
+            <span>ZOOM</span>
+            <span id="zoomValue">1.0×</span>
+          </div>
+          <input
+            id="zoomSlider"
+            type="range"
+            min="1"
+            max="3"
+            step="0.1"
+            value="1"
+          >
+        </div>
+
         <button class="mode-name" data-mode="slow">SLOW-MO</button>
         <button class="mode-name active" data-mode="photo">PHOTO</button>
         <button class="mode-name" data-mode="video">VIDEO</button>
@@ -590,7 +599,7 @@ body {
           <span class="inner"></span>
         </button>
 
-        <button id="zoomToggle" aria-label="Adjust zoom">1.0×</button>
+        <button id="zoomButton" aria-label="Adjust zoom">1.0×</button>
       </div>
 
     </div>
@@ -600,7 +609,11 @@ body {
 <div id="statusMessage"></div>
 
 <div id="startScreen">
-  <img class="start-logo" src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png" alt="REWIND">
+  <img
+    class="start-logo"
+    src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png"
+    alt="REWIND"
+  >
   <p>A different way to capture the moment. Allow camera access to begin.</p>
   <button id="startButton">OPEN CAMERA</button>
   <div id="errorMessage"></div>
@@ -609,57 +622,59 @@ body {
 <script>
 "use strict";
 
-const video=document.getElementById("cameraVideo");
-const canvas=document.getElementById("cameraCanvas");
-const gl=canvas.getContext("webgl",{
+const video = document.getElementById("cameraVideo");
+const canvas = document.getElementById("cameraCanvas");
+const gl = canvas.getContext("webgl", {
   alpha:false,
   antialias:true,
   preserveDrawingBuffer:true
 });
 
-const shutter=document.getElementById("shutter");
-const startScreen=document.getElementById("startScreen");
-const startButton=document.getElementById("startButton");
-const errorMessage=document.getElementById("errorMessage");
-const statusMessage=document.getElementById("statusMessage");
-const recordingLabel=document.getElementById("recordingLabel");
-const recordingTime=document.getElementById("recordingTime");
+const shutter = document.getElementById("shutter");
+const startScreen = document.getElementById("startScreen");
+const startButton = document.getElementById("startButton");
+const errorMessage = document.getElementById("errorMessage");
+const statusMessage = document.getElementById("statusMessage");
+const recordingLabel = document.getElementById("recordingLabel");
+const recordingTime = document.getElementById("recordingTime");
+const zoomButton = document.getElementById("zoomButton");
+const zoomPanel = document.getElementById("zoomPanel");
+const zoomSlider = document.getElementById("zoomSlider");
+const zoomValue = document.getElementById("zoomValue");
+const mainLogo = document.getElementById("mainLogo");
 
-const zoomToggle=document.getElementById("zoomToggle");
-const zoomPanel=document.getElementById("zoomPanel");
-const zoomSlider=document.getElementById("zoomSlider");
-const zoomValue=document.getElementById("zoomValue");
+let cameraStream = null;
+let cameraReady = false;
+let recorder = null;
+let recordedChunks = [];
+let recording = false;
+let recordingStartedAt = 0;
+let recordingClock = null;
+let lensShape = 0;
+let animationFrame = null;
+let texture = null;
+let program = null;
+let statusTimeout = null;
+let currentMode = "photo";
+let slowProcessing = false;
+let slowSourceUrl = null;
 
-let cameraStream=null;
-let cameraReady=false;
-let recorder=null;
-let recordedChunks=[];
-let recording=false;
-let recordingStartedAt=0;
-let recordingClock=null;
-let lensShape=0;
-let animationFrame=null;
-let texture=null;
-let program=null;
-let statusTimeout=null;
-let currentMode="photo";
-let slowProcessing=false;
-let slowSourceUrl=null;
+let zoomLevel = 1;
+let slowLensShape = 0;
+let slowZoomLevel = 1;
 
-let zoomLevel=1;
-let slowZoom=1;
-let slowLensShape=0;
+/* SHADERS */
 
-const vertexShaderSource=`
+const vertexShaderSource = `
 attribute vec2 position;
 varying vec2 vUv;
 
 void main(){
-  vUv=position*.5+.5;
-  gl_Position=vec4(position,0.,1.);
+  vUv = position * .5 + .5;
+  gl_Position = vec4(position,0.,1.);
 }`;
 
-const fragmentShaderSource=`
+const fragmentShaderSource = `
 precision highp float;
 
 varying vec2 vUv;
@@ -673,171 +688,160 @@ uniform float uZoom;
 
 void main(){
 
-  vec2 p=(vUv-.5)*2.0;
-  float aspect=uResolution.x/uResolution.y;
+  vec2 p = (vUv - .5) * 2.0;
 
-  // Aspect-correct coordinates keep the circular lens round.
-  p.x*=aspect;
+  float aspect = uResolution.x / uResolution.y;
 
-  float radius=aspect*.94;
-  vec2 lens=p/radius;
+  // Physical screen coordinates.
+  p.x *= aspect;
 
-  float angle=atan(lens.y,lens.x);
-  float rawRadius=length(lens);
+  float radiusX = aspect * .94;
+  float radiusY = radiusX;
 
-  // Gentle, irregular optical edge distortion.
-  float edgeDistortion=
-      sin(angle*5.0+.4)*.003
-    + sin(angle*9.0+1.2)*.0018
-    + sin(angle*13.0+2.1)*.0008;
+  vec2 lens = vec2(p.x / radiusX, p.y / radiusY);
 
-  float edgeRadius=1.0+edgeDistortion;
-  float r=rawRadius/edgeRadius;
+  float angle = atan(lens.y,lens.x);
+  float rawRadius = length(lens);
 
-  if(uShape<.5 && r>1.0){
-    gl_FragColor=vec4(0.,0.,0.,1.);
+  // Slight irregularity in the circular lens boundary.
+  float edgeDistortion =
+      sin(angle * 5.0 + .4) * .004
+    + sin(angle * 9.0 + 1.2) * .0025
+    + sin(angle * 13.0 + 2.1) * .0012;
+
+  float edgeRadius = 1.0 + edgeDistortion;
+  float r = rawRadius / edgeRadius;
+
+  if(uShape < .5 && r > 1.0){
+    gl_FragColor = vec4(0.,0.,0.,1.);
     return;
   }
 
+  float mapped;
+
+  if(uShape < .5){
+
+    // Circular fisheye warping.
+    float edgeCurve = pow(r,4.0) * (1.0-r);
+    mapped = r + .34 * edgeCurve;
+
+  }else{
+
+    // Full-frame fisheye warping.
+    float radial = length(p);
+    float strength = .16;
+    float curve = pow(radial,3.0);
+    mapped = radial * (1.0-strength*curve);
+  }
+
+  vec2 direction =
+    rawRadius > .0001 ? lens / rawRadius : vec2(0.);
+
   vec2 warped;
 
-  if(uShape<.5){
+  if(uShape < .5){
 
-    // Circular fisheye: smooth centre, stronger edge curvature.
-    float edgeCurve=pow(r,3.5)*(1.0-r);
-    float mapped=r+.38*edgeCurve;
-
-    vec2 direction=rawRadius>.0001
-      ?lens/rawRadius
-      :vec2(0.);
-
-    warped=direction*mapped;
+    warped = direction * mapped;
 
   }else{
 
-    // Full-frame fisheye: smooth barrel distortion across the frame.
-    float radial=length(p);
-    vec2 direction=radial>.0001
-      ?p/radial
-      :vec2(0.);
+    float radial = length(p);
+    vec2 screenDirection =
+      radial > .0001 ? p / radial : vec2(0.);
 
-    float curve=1.0-.13*pow(radial,2.0);
-    float mapped=radial*curve;
-
-    // A gentle extra curve gives the image a more optical character.
-    mapped+=.025*pow(radial,4.0);
-
-    warped=direction*mapped;
+    warped = screenDirection *
+      (radial * (1.0-.16*pow(radial,2.0)));
   }
 
-  // Zoom is applied after lens distortion so the optical effect remains.
-  float safeZoom=max(uZoom,.5);
-  warped/=safeZoom;
+  // Calculate the source image mapping while preserving aspect ratio.
+  float videoAspect = uVideoResolution.x / uVideoResolution.y;
 
-  float videoAspect=uVideoResolution.x/uVideoResolution.y;
-  vec2 uv=vec2(.5);
+  vec2 uv = vec2(.5);
 
-  if(videoAspect>aspect){
-    uv.x+=warped.x*(aspect/videoAspect)*.5;
-    uv.y+=warped.y*.5;
+  if(videoAspect > aspect){
+    uv.x += warped.x * (aspect/videoAspect) * .5;
+    uv.y += warped.y * .5;
   }else{
-    uv.x+=warped.x*.5;
-    uv.y+=warped.y*(videoAspect/aspect)*.5;
+    uv.x += warped.x * .5;
+    uv.y += warped.y * (videoAspect/aspect) * .5;
   }
 
-  // Keep sampling inside the camera image.
-  uv=clamp(uv,vec2(.001),vec2(.999));
+  // Zoom is applied to the source sampling, before optical effects.
+  // This keeps the lens distortion active at every zoom level.
+  uv = vec2(.5) + (uv - vec2(.5)) / uZoom;
 
-  // Subtle chromatic separation.
-  // Reduced at wide zoom to prevent a scratched-disc appearance.
-  float aberration=0.0;
-
-  if(uShape<.5){
-    aberration=pow(min(r,1.0),3.0)*.0035;
-  }else{
-    aberration=pow(min(length(p),1.0),2.0)*.0007;
+  // Prevent edge smearing when the expanded image reaches its limits.
+  if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0){
+    gl_FragColor = vec4(0.,0.,0.,1.);
+    return;
   }
 
-  aberration*=smoothstep(.55,1.0,uZoom);
+  float aberration = pow(min(r,1.0),3.0) * .006;
+  vec2 offset = direction * aberration;
 
-  vec2 direction=rawRadius>.0001
-    ?lens/rawRadius
-    :vec2(0.);
+  vec2 redUV = clamp(uv+offset,vec2(.001),vec2(.999));
+  vec2 blueUV = clamp(uv-offset,vec2(.001),vec2(.999));
 
-  vec2 offset=direction*aberration;
+  float red = texture2D(uVideo,redUV).r;
+  float green = texture2D(uVideo,uv).g;
+  float blue = texture2D(uVideo,blueUV).b;
 
-  float red=texture2D(
-    uVideo,
-    clamp(uv+offset,vec2(.001),vec2(.999))
-  ).r;
+  vec3 colour = vec3(red,green,blue);
 
-  float green=texture2D(uVideo,uv).g;
+  float centreGlow = 1.0 + .10 * exp(-r*r*4.0);
 
-  float blue=texture2D(
-    uVideo,
-    clamp(uv-offset,vec2(.001),vec2(.999))
-  ).b;
+  // Circle retains optical falloff and vignette.
+  // Full Frame has no vignette.
+  float circleFalloff =
+      (1.0-.28*smoothstep(.25,1.0,r))
+    * (1.0-.48*smoothstep(.62,1.0,r));
 
-  vec3 colour=vec3(red,green,blue);
+  float opticalFalloff = uShape < .5 ? circleFalloff : 1.0;
 
-  float centreGlow=1.0+.08*exp(-r*r*4.0);
+  float directionalLight =
+    1.0 - .09 * smoothstep(-.4,1.0,lens.y);
 
-  // Circle has its own optical falloff.
-  // Full Frame stays clean, without a vignette.
-  float circleFalloff=
-      (1.0-.25*smoothstep(.25,1.0,r))
-    * (1.0-.40*smoothstep(.68,1.0,r));
+  colour *= centreGlow * directionalLight * opticalFalloff;
 
-  float opticalFalloff=uShape<.5
-    ?circleFalloff
-    :1.0;
+  colour.r *= 1.035;
+  colour.g *= 1.005;
+  colour.b *= .965;
 
-  float directionalLight=
-    1.0-.07*smoothstep(-.4,1.0,lens.y);
-
-  colour*=centreGlow*directionalLight*opticalFalloff;
-
-  colour.r*=1.035;
-  colour.g*=1.005;
-  colour.b*=.965;
-
-  // Fine film grain.
-  float grain=fract(
+  // Film grain.
+  float grain = fract(
     sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))
-    *43758.5453
+    * 43758.5453
   );
 
-  colour+=(grain-.5)*.018;
+  colour += (grain-.5) * .025;
 
-  if(uShape<.5){
+  if(uShape < .5){
 
-    // Restrained optical colour at the circular lens edge.
-    float ringStrength=smoothstep(.7,1.0,uZoom);
+    float redRing = exp(-pow((r-.974)/.0045,2.0));
+    float greenRing = exp(-pow((r-.990)/.0045,2.0));
 
-    float redRing=exp(-pow((r-.974)/.0055,2.0));
-    float greenRing=exp(-pow((r-.990)/.0055,2.0));
+    colour.r += redRing * .13;
+    colour.g += greenRing * .085;
 
-    colour.r+=redRing*.075*ringStrength;
-    colour.g+=greenRing*.05*ringStrength;
-
-    colour*=1.0-smoothstep(.994,1.0,r);
+    colour *= 1.0-smoothstep(.994,1.0,r);
 
   }else{
 
-    // Very subtle full-frame colour separation.
-    // No circular rings or vignette in this mode.
-    float redLine=exp(-pow((vUv.x-.125)/.0025,2.0));
-    float greenLine=exp(-pow((vUv.x-.135)/.0025,2.0));
+    float redLine = exp(-pow((vUv.x-.125)/.0018,2.0));
+    float greenLine = exp(-pow((vUv.x-.135)/.0018,2.0));
 
-    colour.r+=redLine*.055;
-    colour.g+=greenLine*.035;
+    colour.r += redLine * .10;
+    colour.g += greenLine * .07;
   }
 
-  gl_FragColor=vec4(colour,1.0);
+  gl_FragColor = vec4(colour,1.0);
 }`;
 
+/* WEBGL SETUP */
+
 function createShader(type,source){
-  const shader=gl.createShader(type);
+  const shader = gl.createShader(type);
+
   gl.shaderSource(shader,source);
   gl.compileShader(shader);
 
@@ -851,10 +855,11 @@ function createShader(type,source){
 function setupWebGL(){
   if(!gl) throw new Error("WebGL is unavailable.");
 
-  const vs=createShader(gl.VERTEX_SHADER,vertexShaderSource);
-  const fs=createShader(gl.FRAGMENT_SHADER,fragmentShaderSource);
+  const vs = createShader(gl.VERTEX_SHADER,vertexShaderSource);
+  const fs = createShader(gl.FRAGMENT_SHADER,fragmentShaderSource);
 
-  program=gl.createProgram();
+  program = gl.createProgram();
+
   gl.attachShader(program,vs);
   gl.attachShader(program,fs);
   gl.linkProgram(program);
@@ -865,7 +870,7 @@ function setupWebGL(){
 
   gl.useProgram(program);
 
-  const buffer=gl.createBuffer();
+  const buffer = gl.createBuffer();
 
   gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
 
@@ -875,12 +880,12 @@ function setupWebGL(){
     gl.STATIC_DRAW
   );
 
-  const position=gl.getAttribLocation(program,"position");
+  const position = gl.getAttribLocation(program,"position");
 
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
 
-  texture=gl.createTexture();
+  texture = gl.createTexture();
 
   gl.bindTexture(gl.TEXTURE_2D,texture);
 
@@ -892,15 +897,17 @@ function setupWebGL(){
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
 }
 
+/* CANVAS */
+
 function resizeCanvas(){
-  const dpr=Math.min(devicePixelRatio||1,2);
+  const dpr = Math.min(devicePixelRatio||1,2);
 
-  const width=Math.round(innerWidth*dpr);
-  const height=Math.round(innerHeight*dpr);
+  const width = Math.round(innerWidth*dpr);
+  const height = Math.round(innerHeight*dpr);
 
-  if(canvas.width!==width||canvas.height!==height){
-    canvas.width=width;
-    canvas.height=height;
+  if(canvas.width!==width || canvas.height!==height){
+    canvas.width = width;
+    canvas.height = height;
   }
 
   if(gl){
@@ -908,10 +915,12 @@ function resizeCanvas(){
   }
 }
 
-function render(now=0){
-  if(!gl||!program) return;
+/* RENDER LOOP */
 
-  if(video.readyState>=video.HAVE_CURRENT_DATA){
+function render(now=0){
+  if(!gl || !program) return;
+
+  if(video.readyState >= video.HAVE_CURRENT_DATA){
 
     gl.useProgram(program);
     gl.bindTexture(gl.TEXTURE_2D,texture);
@@ -927,18 +936,10 @@ function render(now=0){
       );
     }catch(e){}
 
-    const activeShape=slowProcessing
-      ?slowLensShape
-      :lensShape;
+    const activeShape = slowProcessing ? slowLensShape : lensShape;
+    const activeZoom = slowProcessing ? slowZoomLevel : zoomLevel;
 
-    const activeZoom=slowProcessing
-      ?slowZoom
-      :zoomLevel;
-
-    gl.uniform1i(
-      gl.getUniformLocation(program,"uVideo"),
-      0
-    );
+    gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
 
     gl.uniform2f(
       gl.getUniformLocation(program,"uResolution"),
@@ -970,16 +971,17 @@ function render(now=0){
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
 
-  animationFrame=requestAnimationFrame(render);
+  animationFrame = requestAnimationFrame(render);
 }
 
 /* CAMERA */
 
 async function startCamera(){
-  errorMessage.textContent="";
-  startButton.textContent="OPENING CAMERA";
+  errorMessage.textContent = "";
+  startButton.textContent = "OPENING CAMERA";
 
   try{
+
     if(!navigator.mediaDevices?.getUserMedia){
       throw new Error("Open REWIND in Safari using its HTTPS address.");
     }
@@ -988,7 +990,7 @@ async function startCamera(){
       cameraStream.getTracks().forEach(track=>track.stop());
     }
 
-    cameraStream=await navigator.mediaDevices.getUserMedia({
+    cameraStream = await navigator.mediaDevices.getUserMedia({
       audio:true,
       video:{
         facingMode:{ideal:"environment"},
@@ -998,44 +1000,42 @@ async function startCamera(){
       }
     });
 
-    video.srcObject=cameraStream;
+    video.srcObject = cameraStream;
     video.removeAttribute("src");
-    video.playbackRate=1;
+    video.playbackRate = 1;
 
     await video.play();
 
-    cameraReady=true;
+    cameraReady = true;
 
-    if(!program) setupWebGL();
+    if(!program){
+      setupWebGL();
+    }
 
-    startScreen.style.display="none";
+    startScreen.style.display = "none";
 
     resizeCanvas();
 
     cancelAnimationFrame(animationFrame);
-    animationFrame=requestAnimationFrame(render);
+    animationFrame = requestAnimationFrame(render);
 
   }catch(error){
+
     console.error(error);
 
-    errorMessage.textContent=
-      error.message||"Unable to access the camera. Check camera permissions.";
+    errorMessage.textContent =
+      error.message || "Unable to access the camera. Check camera permissions.";
 
-    startButton.textContent="TRY AGAIN";
+    startButton.textContent = "TRY AGAIN";
   }
 }
 
 startButton.addEventListener("click",startCamera);
 
-/* LENS SELECTION */
+/* LENS */
 
 function setLens(shape){
-  if(recording||slowProcessing){
-    showStatus("FINISH RECORDING FIRST");
-    return;
-  }
-
-  lensShape=shape;
+  lensShape = shape;
 
   document.getElementById("circleButton")
     .classList.toggle("active",shape===0);
@@ -1043,15 +1043,14 @@ function setLens(shape){
   document.getElementById("fullButton")
     .classList.toggle("active",shape===1);
 
-  // Circle starts at 1x. Only Full Frame can go down to 0.5x.
-  zoomSlider.min=shape===1?".5":"1";
+  mainLogo.classList.toggle("full-frame",shape===1);
 
-  if(shape===0&&zoomLevel<1){
-    zoomLevel=1;
+  // Circle mode cannot zoom below 1x.
+  if(shape===0 && zoomLevel<1){
+    zoomLevel = 1;
   }
 
-  updateZoomDisplay();
-  zoomSlider.value=zoomLevel;
+  updateZoomInterface();
 }
 
 document.getElementById("circleButton")
@@ -1062,47 +1061,59 @@ document.getElementById("fullButton")
 
 /* ZOOM */
 
-function updateZoomDisplay(){
-  const label=zoomLevel.toFixed(1)+"×";
+function updateZoomInterface(){
+  const minimum = lensShape===1 ? .5 : 1;
 
-  zoomValue.textContent=label;
-  zoomToggle.textContent=label;
-  zoomSlider.value=zoomLevel;
+  zoomSlider.min = String(minimum);
+  zoomSlider.max = "3";
+  zoomSlider.value = String(zoomLevel);
+
+  zoomValue.textContent = zoomLevel.toFixed(1)+"×";
+  zoomButton.textContent = zoomLevel.toFixed(1)+"×";
 }
 
-zoomToggle.addEventListener("click",()=>{
-  const isOpen=zoomPanel.classList.toggle("open");
+zoomButton.addEventListener("click",event=>{
+  event.stopPropagation();
 
-  zoomToggle.classList.toggle("active",isOpen);
+  const isOpen = zoomPanel.classList.toggle("open");
+
+  zoomButton.classList.toggle("active",isOpen);
+});
+
+zoomPanel.addEventListener("click",event=>{
+  event.stopPropagation();
 });
 
 zoomSlider.addEventListener("input",()=>{
-  if(recording||slowProcessing) return;
-
-  zoomLevel=parseFloat(zoomSlider.value);
-
-  updateZoomDisplay();
+  zoomLevel = Number(zoomSlider.value);
+  updateZoomInterface();
 });
 
-/* MODE SELECTION */
+document.addEventListener("click",event=>{
+  if(
+    !zoomPanel.contains(event.target) &&
+    !zoomButton.contains(event.target)
+  ){
+    zoomPanel.classList.remove("open");
+    zoomButton.classList.remove("active");
+  }
+});
+
+/* MODES */
 
 function setMode(mode){
-  if(recording||slowProcessing){
+  if(recording || slowProcessing){
     showStatus("FINISH RECORDING FIRST");
     return;
   }
 
-  currentMode=mode;
+  currentMode = mode;
 
   document.querySelectorAll(".mode-name").forEach(el=>{
     el.classList.toggle("active",el.dataset.mode===mode);
   });
 
-  shutter.classList.remove(
-    "video-mode",
-    "slow-mode",
-    "recording"
-  );
+  shutter.classList.remove("video-mode","slow-mode","recording");
 
   if(mode==="video"){
     shutter.classList.add("video-mode");
@@ -1120,50 +1131,47 @@ document.querySelectorAll(".mode-name").forEach(button=>{
 /* STATUS */
 
 function showStatus(message){
-  statusMessage.textContent=message;
+  statusMessage.textContent = message;
   statusMessage.classList.add("show");
 
   clearTimeout(statusTimeout);
 
-  statusTimeout=setTimeout(()=>{
+  statusTimeout = setTimeout(()=>{
     statusMessage.classList.remove("show");
   },2600);
 }
 
 /* SWIPE MODE SELECTOR */
 
-let swipeStartX=0;
-let swipeStartY=0;
-let swiping=false;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swiping = false;
 
-const modeSelector=document.getElementById("modeSelector");
+const modeSelector = document.getElementById("modeSelector");
 
 modeSelector.addEventListener("touchstart",event=>{
   if(event.touches.length!==1) return;
 
-  swipeStartX=event.touches[0].clientX;
-  swipeStartY=event.touches[0].clientY;
-  swiping=true;
+  swipeStartX = event.touches[0].clientX;
+  swipeStartY = event.touches[0].clientY;
+  swiping = true;
 },{passive:true});
 
 modeSelector.addEventListener("touchend",event=>{
   if(!swiping) return;
 
-  swiping=false;
+  swiping = false;
 
-  const dx=event.changedTouches[0].clientX-swipeStartX;
-  const dy=event.changedTouches[0].clientY-swipeStartY;
+  const dx = event.changedTouches[0].clientX-swipeStartX;
+  const dy = event.changedTouches[0].clientY-swipeStartY;
 
-  if(Math.abs(dx)<35||Math.abs(dx)<Math.abs(dy)) return;
+  if(Math.abs(dx)<35 || Math.abs(dx)<Math.abs(dy)) return;
 
-  const modes=["slow","photo","video"];
-  let index=modes.indexOf(currentMode);
+  const modes = ["slow","photo","video"];
+  let index = modes.indexOf(currentMode);
 
-  if(dx<0){
-    index=Math.min(2,index+1);
-  }else{
-    index=Math.max(0,index-1);
-  }
+  if(dx<0) index = Math.min(2,index+1);
+  else index = Math.max(0,index-1);
 
   setMode(modes[index]);
 },{passive:true});
@@ -1171,9 +1179,9 @@ modeSelector.addEventListener("touchend",event=>{
 /* FILE SAVING */
 
 async function saveFile(blob,filename){
-  const file=new File([blob],filename,{type:blob.type});
+  const file = new File([blob],filename,{type:blob.type});
 
-  if(navigator.share&&navigator.canShare?.({files:[file]})){
+  if(navigator.share && navigator.canShare?.({files:[file]})){
     try{
       await navigator.share({
         files:[file],
@@ -1181,16 +1189,17 @@ async function saveFile(blob,filename){
       });
 
       return;
+
     }catch(error){
       if(error.name==="AbortError") return;
     }
   }
 
-  const url=URL.createObjectURL(blob);
-  const link=document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
 
-  link.href=url;
-  link.download=filename;
+  link.href = url;
+  link.download = filename;
 
   document.body.appendChild(link);
   link.click();
@@ -1202,7 +1211,7 @@ async function saveFile(blob,filename){
 /* PHOTO */
 
 function takePhoto(){
-  if(!cameraReady||recording||slowProcessing) return;
+  if(!cameraReady || recording || slowProcessing) return;
 
   canvas.toBlob(async blob=>{
     if(!blob){
@@ -1210,19 +1219,17 @@ function takePhoto(){
       return;
     }
 
-    await saveFile(
-      blob,
-      "REWIND-"+Date.now()+".jpg"
-    );
+    await saveFile(blob,"REWIND-"+Date.now()+".jpg");
 
     showStatus("PHOTO CAPTURED");
+
   },"image/jpeg",.96);
 }
 
 /* VIDEO FORMAT */
 
 function supportedMime(){
-  const formats=[
+  const formats = [
     "video/mp4;codecs=avc1.42E01E",
     "video/mp4",
     "video/webm;codecs=vp9,opus",
@@ -1230,7 +1237,7 @@ function supportedMime(){
     "video/webm"
   ];
 
-  return formats.find(type=>MediaRecorder.isTypeSupported(type))||"";
+  return formats.find(type=>MediaRecorder.isTypeSupported(type)) || "";
 }
 
 /* RECORDING CLOCK */
@@ -1238,23 +1245,21 @@ function supportedMime(){
 function updateRecordingClock(){
   if(!recording) return;
 
-  const seconds=Math.floor(
-    (Date.now()-recordingStartedAt)/1000
-  );
+  const seconds = Math.floor((Date.now()-recordingStartedAt)/1000);
 
-  recordingTime.textContent="REC "+
+  recordingTime.textContent = "REC "+
     String(Math.floor(seconds/60)).padStart(2,"0")+":"+
     String(seconds%60).padStart(2,"0");
 }
 
 function beginRecordingClock(){
-  recordingStartedAt=Date.now();
+  recordingStartedAt = Date.now();
 
   recordingLabel.classList.add("active");
 
   updateRecordingClock();
 
-  recordingClock=setInterval(updateRecordingClock,250);
+  recordingClock = setInterval(updateRecordingClock,250);
 }
 
 function endRecordingClock(){
@@ -1265,35 +1270,36 @@ function endRecordingClock(){
 /* NORMAL VIDEO */
 
 function startNormalVideo(){
-  if(!cameraReady||recording) return;
+  if(!cameraReady || recording) return;
 
   try{
-    const stream=canvas.captureStream(30);
+
+    const stream = canvas.captureStream(30);
 
     cameraStream.getAudioTracks().forEach(track=>{
       stream.addTrack(track);
     });
 
-    const mimeType=supportedMime();
+    const mimeType = supportedMime();
 
-    recorder=new MediaRecorder(
+    recorder = new MediaRecorder(
       stream,
-      mimeType?{mimeType}:{}
+      mimeType ? {mimeType} : {}
     );
 
-    recordedChunks=[];
+    recordedChunks = [];
 
-    recorder.ondataavailable=e=>{
-      if(e.data?.size){
-        recordedChunks.push(e.data);
+    recorder.ondataavailable = event=>{
+      if(event.data?.size){
+        recordedChunks.push(event.data);
       }
     };
 
-    recorder.onstop=async()=>{
-      const type=recorder.mimeType||"video/webm";
-      const ext=type.includes("mp4")?"mp4":"webm";
+    recorder.onstop = async()=>{
+      const type = recorder.mimeType || "video/webm";
+      const ext = type.includes("mp4") ? "mp4" : "webm";
 
-      const blob=new Blob(recordedChunks,{type});
+      const blob = new Blob(recordedChunks,{type});
 
       stream.getTracks().forEach(track=>track.stop());
 
@@ -1306,26 +1312,28 @@ function startNormalVideo(){
         showStatus("VIDEO READY TO SAVE");
       }
 
-      recordedChunks=[];
+      recordedChunks = [];
     };
 
     recorder.start(250);
 
-    recording=true;
+    recording = true;
+
     shutter.classList.add("recording");
 
     beginRecordingClock();
 
   }catch(error){
+
     console.error(error);
     showStatus("COULD NOT START VIDEO");
   }
 }
 
 function stopNormalVideo(){
-  if(!recording||!recorder) return;
+  if(!recording || !recorder) return;
 
-  recording=false;
+  recording = false;
 
   endRecordingClock();
 
@@ -1339,46 +1347,45 @@ function stopNormalVideo(){
 /* SLOW MOTION RECORDING */
 
 async function startSlowMotion(){
-  if(!cameraReady||recording||slowProcessing) return;
+  if(!cameraReady || recording || slowProcessing) return;
 
-  if(!canvas.captureStream||!window.MediaRecorder){
+  if(!canvas.captureStream || !window.MediaRecorder){
     showStatus("SLOW MOTION NOT SUPPORTED");
     return;
   }
 
   try{
-    // Lock the selected lens and zoom for the entire recording.
-    slowLensShape=lensShape;
-    slowZoom=zoomLevel;
 
-    const sourceStream=canvas.captureStream(60);
-    const mimeType=supportedMime();
+    // Lock the lens and zoom settings for the entire recording.
+    slowLensShape = lensShape;
+    slowZoomLevel = zoomLevel;
 
-    const sourceRecorder=new MediaRecorder(
+    const sourceStream = canvas.captureStream(60);
+    const mimeType = supportedMime();
+
+    const sourceRecorder = new MediaRecorder(
       sourceStream,
-      mimeType?{mimeType}:{}
+      mimeType ? {mimeType} : {}
     );
 
-    const sourceChunks=[];
+    const sourceChunks = [];
 
-    sourceRecorder.ondataavailable=e=>{
-      if(e.data?.size){
-        sourceChunks.push(e.data);
+    sourceRecorder.ondataavailable = event=>{
+      if(event.data?.size){
+        sourceChunks.push(event.data);
       }
     };
 
-    sourceRecorder.onstop=async()=>{
+    sourceRecorder.onstop = async()=>{
       sourceStream.getTracks().forEach(track=>track.stop());
 
-      const sourceType=sourceRecorder.mimeType||"video/webm";
+      const sourceType = sourceRecorder.mimeType || "video/webm";
 
-      const sourceBlob=new Blob(sourceChunks,{
-        type:sourceType
-      });
+      const sourceBlob = new Blob(sourceChunks,{type:sourceType});
 
       if(!sourceBlob.size){
-        recording=false;
-        slowProcessing=false;
+        recording = false;
+        slowProcessing = false;
         resetShutter();
         showStatus("SLOW MOTION FAILED");
         return;
@@ -1389,8 +1396,8 @@ async function startSlowMotion(){
 
     sourceRecorder.start(250);
 
-    recorder=sourceRecorder;
-    recording=true;
+    recorder = sourceRecorder;
+    recording = true;
 
     shutter.classList.add("recording");
 
@@ -1399,9 +1406,11 @@ async function startSlowMotion(){
     showStatus("SLOW MOTION RECORDING");
 
   }catch(error){
+
     console.error(error);
 
-    recording=false;
+    recording = false;
+
     resetShutter();
 
     showStatus("COULD NOT START SLOW MOTION");
@@ -1411,43 +1420,47 @@ async function startSlowMotion(){
 /* SLOW MOTION EXPORT */
 
 async function processSlowMotion(sourceBlob){
-  slowProcessing=true;
-  recording=false;
+  slowProcessing = true;
+  recording = false;
 
   endRecordingClock();
 
   shutter.classList.add("recording");
 
-  const originalStream=cameraStream;
+  const originalStream = cameraStream;
 
-  slowSourceUrl=URL.createObjectURL(sourceBlob);
+  slowSourceUrl = URL.createObjectURL(sourceBlob);
 
-  let outputStream=null;
-  let outputRecorder=null;
-  let outputChunks=[];
+  let outputStream = null;
+  let outputRecorder = null;
+  let outputChunks = [];
 
   try{
+
     video.pause();
-    video.srcObject=null;
+    video.srcObject = null;
     video.removeAttribute("src");
-    video.loop=false;
-    video.muted=true;
-    video.playsInline=true;
-    video.defaultPlaybackRate=.25;
-    video.playbackRate=.25;
+
+    video.loop = false;
+    video.muted = true;
+    video.playsInline = true;
+
+    video.defaultPlaybackRate = .25;
+    video.playbackRate = .25;
 
     await new Promise((resolve,reject)=>{
-      const loaded=()=>{
+
+      const loaded = ()=>{
         cleanup();
         resolve();
       };
 
-      const failed=()=>{
+      const failed = ()=>{
         cleanup();
         reject(new Error("Could not load the recorded video."));
       };
 
-      const cleanup=()=>{
+      const cleanup = ()=>{
         video.removeEventListener("loadedmetadata",loaded);
         video.removeEventListener("error",failed);
       };
@@ -1455,23 +1468,25 @@ async function processSlowMotion(sourceBlob){
       video.addEventListener("loadedmetadata",loaded,{once:true});
       video.addEventListener("error",failed,{once:true});
 
-      video.src=slowSourceUrl;
+      video.src = slowSourceUrl;
       video.load();
     });
 
     if(video.readyState<video.HAVE_CURRENT_DATA){
+
       await new Promise((resolve,reject)=>{
-        const ready=()=>{
+
+        const ready = ()=>{
           cleanup();
           resolve();
         };
 
-        const failed=()=>{
+        const failed = ()=>{
           cleanup();
           reject(new Error("Could not decode the slow-motion recording."));
         };
 
-        const cleanup=()=>{
+        const cleanup = ()=>{
           video.removeEventListener("loadeddata",ready);
           video.removeEventListener("error",failed);
         };
@@ -1481,46 +1496,48 @@ async function processSlowMotion(sourceBlob){
       });
     }
 
-    video.defaultPlaybackRate=.25;
-    video.playbackRate=.25;
+    video.defaultPlaybackRate = .25;
+    video.playbackRate = .25;
 
-    outputStream=canvas.captureStream(30);
+    outputStream = canvas.captureStream(30);
 
-    const outputMime=supportedMime();
+    const outputMime = supportedMime();
 
-    outputRecorder=new MediaRecorder(
+    outputRecorder = new MediaRecorder(
       outputStream,
-      outputMime?{mimeType:outputMime}:{}
+      outputMime ? {mimeType:outputMime} : {}
     );
 
-    outputChunks=[];
+    outputChunks = [];
 
-    outputRecorder.ondataavailable=e=>{
-      if(e.data?.size){
-        outputChunks.push(e.data);
+    outputRecorder.ondataavailable = event=>{
+      if(event.data?.size){
+        outputChunks.push(event.data);
       }
     };
 
-    const finished=new Promise((resolve,reject)=>{
+    const finished = new Promise((resolve,reject)=>{
+
       outputRecorder.addEventListener("stop",resolve,{once:true});
 
       outputRecorder.addEventListener("error",event=>{
-        reject(event.error||new Error("Export recording failed."));
+        reject(event.error || new Error("Export recording failed."));
       },{once:true});
     });
 
-    const playbackFinished=new Promise((resolve,reject)=>{
-      const ended=()=>{
+    const playbackFinished = new Promise((resolve,reject)=>{
+
+      const ended = ()=>{
         cleanup();
         resolve();
       };
 
-      const failed=()=>{
+      const failed = ()=>{
         cleanup();
         reject(new Error("Slow-motion playback failed."));
       };
 
-      const cleanup=()=>{
+      const cleanup = ()=>{
         video.removeEventListener("ended",ended);
         video.removeEventListener("error",failed);
       };
@@ -1539,7 +1556,7 @@ async function processSlowMotion(sourceBlob){
 
     await video.play();
 
-    video.playbackRate=.25;
+    video.playbackRate = .25;
 
     if(Math.abs(video.playbackRate-.25)>.01){
       throw new Error("This browser is not accepting 4x slow playback.");
@@ -1553,50 +1570,50 @@ async function processSlowMotion(sourceBlob){
 
     await finished;
 
-    const outputType=outputRecorder.mimeType||"video/webm";
-    const extension=outputType.includes("mp4")?"mp4":"webm";
+    const outputType = outputRecorder.mimeType || "video/webm";
+    const extension = outputType.includes("mp4") ? "mp4" : "webm";
 
-    const result=new Blob(outputChunks,{
-      type:outputType
-    });
+    const result = new Blob(outputChunks,{type:outputType});
 
     if(result.size){
+
       await saveFile(
         result,
         "REWIND-SLOWMO-4X-"+Date.now()+"."+extension
       );
 
       showStatus("4× SLOW MOTION READY");
+
     }else{
       showStatus("SLOW MOTION COULD NOT BE SAVED");
     }
 
   }catch(error){
+
     console.error("Slow-motion export error:",error);
 
-    showStatus(
-      error.message||"SLOW MOTION PROCESSING FAILED"
-    );
+    showStatus(error.message || "SLOW MOTION PROCESSING FAILED");
 
-    if(outputRecorder&&outputRecorder.state!=="inactive"){
+    if(outputRecorder && outputRecorder.state!=="inactive"){
       try{
         outputRecorder.stop();
       }catch(e){}
     }
 
   }finally{
+
     if(outputStream){
       outputStream.getTracks().forEach(track=>track.stop());
     }
 
-    // Restore the original live camera.
+    // Restore the live camera.
     video.pause();
     video.removeAttribute("src");
-    video.srcObject=originalStream;
+    video.srcObject = originalStream;
 
-    video.playbackRate=1;
-    video.defaultPlaybackRate=1;
-    video.muted=true;
+    video.playbackRate = 1;
+    video.defaultPlaybackRate = 1;
+    video.muted = true;
 
     try{
       await video.play();
@@ -1606,19 +1623,19 @@ async function processSlowMotion(sourceBlob){
 
     if(slowSourceUrl){
       URL.revokeObjectURL(slowSourceUrl);
-      slowSourceUrl=null;
+      slowSourceUrl = null;
     }
 
-    slowProcessing=false;
+    slowProcessing = false;
 
     resetShutter();
   }
 }
 
 function stopSlowMotion(){
-  if(!recording||!recorder) return;
+  if(!recording || !recorder) return;
 
-  recording=false;
+  recording = false;
 
   endRecordingClock();
 
@@ -1626,6 +1643,8 @@ function stopSlowMotion(){
     recorder.stop();
   }
 }
+
+/* RESET */
 
 function resetShutter(){
   shutter.classList.remove("recording");
@@ -1637,7 +1656,7 @@ function resetShutter(){
 shutter.addEventListener("click",event=>{
   event.preventDefault();
 
-  if(!cameraReady||slowProcessing) return;
+  if(!cameraReady || slowProcessing) return;
 
   if(currentMode==="photo"){
     takePhoto();
@@ -1645,20 +1664,15 @@ shutter.addEventListener("click",event=>{
   }
 
   if(currentMode==="video"){
-    if(recording){
-      stopNormalVideo();
-    }else{
-      startNormalVideo();
-    }
+    if(recording) stopNormalVideo();
+    else startNormalVideo();
+
     return;
   }
 
   if(currentMode==="slow"){
-    if(recording){
-      stopSlowMotion();
-    }else{
-      startSlowMotion();
-    }
+    if(recording) stopSlowMotion();
+    else startSlowMotion();
   }
 });
 
@@ -1674,13 +1688,19 @@ window.addEventListener("orientationchange",()=>{
 
 window.addEventListener("pagehide",()=>{
   cancelAnimationFrame(animationFrame);
+
   clearInterval(recordingClock);
 
   if(cameraStream){
     cameraStream.getTracks().forEach(track=>track.stop());
   }
 });
-</script>
 
+/* INITIAL SETTINGS */
+
+updateZoomInterface();
+setMode("photo");
+
+</script>
 </body>
 </html>

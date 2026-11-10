@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -381,6 +382,7 @@ let statusTimeout=null;
 const vertexShaderSource=`
 attribute vec2 position;
 varying vec2 vUv;
+
 void main(){
   vUv=position*.5+.5;
   gl_Position=vec4(position,0.,1.);
@@ -388,7 +390,9 @@ void main(){
 
 const fragmentShaderSource=`
 precision highp float;
+
 varying vec2 vUv;
+
 uniform sampler2D uVideo;
 uniform vec2 uResolution;
 uniform vec2 uVideoResolution;
@@ -396,85 +400,190 @@ uniform float uShape;
 uniform float uTime;
 
 void main(){
+
+  /* SCREEN COORDINATES */
+
   vec2 p=(vUv-.5)*2.0;
+
   float aspect=uResolution.x/uResolution.y;
+
   p.x*=aspect;
 
   float radiusX=aspect*.94;
   float radiusY=radiusX;
-  if(uShape>.5) radiusY=aspect*.71;
 
-  vec2 lens=vec2(p.x/radiusX,p.y/radiusY);
-  float r=length(lens);
+  if(uShape>.5){
+    radiusY=aspect*.71;
+  }
+
+  vec2 lens=vec2(
+    p.x/radiusX,
+    p.y/radiusY
+  );
+
+  float angle=atan(lens.y,lens.x);
+
+  float rawRadius=length(lens);
+
+  /* SLIGHTLY IRREGULAR OPTICAL LENS EDGE */
+
+  float edgeDistortion=
+      sin(angle*5.0+0.4)*.004
+    + sin(angle*9.0+1.2)*.0025
+    + sin(angle*13.0+2.1)*.0012;
+
+  float edgeRadius=1.0+edgeDistortion;
+
+  float r=rawRadius/edgeRadius;
 
   if(r>1.0){
     gl_FragColor=vec4(0.,0.,0.,1.);
     return;
   }
 
-  float maxAngle=1.32;
-  float theta=r*maxAngle;
-  float mapped=tan(theta)/tan(maxAngle);
-  vec2 direction=r>.0001?lens/r:vec2(0.);
+  /* FLAT CENTRE, GRADUAL EDGE DISTORTION */
+
+  float distortionStrength=.34;
+
+  float edgeCurve=pow(r,4.0)*(1.0-r);
+
+  float mapped=r+distortionStrength*edgeCurve;
+
+  vec2 direction=
+    rawRadius>.0001
+    ? lens/rawRadius
+    : vec2(0.);
+
   vec2 warped=direction*mapped;
 
-  float videoAspect=uVideoResolution.x/uVideoResolution.y;
+  /* CAMERA ASPECT RATIO */
+
+  float videoAspect=
+    uVideoResolution.x/uVideoResolution.y;
+
   vec2 uv=vec2(.5);
 
   if(videoAspect>aspect){
+
     uv.x+=warped.x*(aspect/videoAspect)*.5;
     uv.y+=warped.y*.5;
+
   }else{
+
     uv.x+=warped.x*.5;
     uv.y+=warped.y*(videoAspect/aspect)*.5;
+
   }
 
   uv=clamp(uv,vec2(.001),vec2(.999));
 
-  float aberration=pow(r,3.0)*.004;
+  /* CHROMATIC ABERRATION */
+
+  float aberration=pow(r,3.0)*.006;
+
   vec2 offset=direction*aberration;
 
-  float red=texture2D(uVideo,clamp(uv+offset,.001,.999)).r;
+  float red=texture2D(
+    uVideo,
+    clamp(uv+offset,vec2(.001),vec2(.999))
+  ).r;
+
   float green=texture2D(uVideo,uv).g;
-  float blue=texture2D(uVideo,clamp(uv-offset,.001,.999)).b;
+
+  float blue=texture2D(
+    uVideo,
+    clamp(uv-offset,vec2(.001),vec2(.999))
+  ).b;
 
   vec3 colour=vec3(red,green,blue);
 
-  float centreGlow=1.0+.12*exp(-r*r*5.0);
-  float edgeFalloff=1.0-.34*smoothstep(.12,1.0,r);
-  float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
-  float vignette=1.0-.57*smoothstep(.48,1.0,r);
+  /* NATURAL LIGHT DISTRIBUTION */
 
-  colour*=centreGlow*edgeFalloff*directionalLight*vignette;
+  float centreGlow=
+    1.0+.10*exp(-r*r*4.0);
+
+  float edgeFalloff=
+    1.0-.28*smoothstep(.25,1.0,r);
+
+  float directionalLight=
+    1.0-.09*smoothstep(-.4,1.0,lens.y);
+
+  float vignette=
+    1.0-.48*smoothstep(.62,1.0,r);
+
+  colour*=centreGlow*
+          edgeFalloff*
+          directionalLight*
+          vignette;
+
+  /* SUBTLE WARM FILM TONE */
 
   colour.r*=1.035;
   colour.g*=1.005;
   colour.b*=.965;
 
-  float grain=fract(sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))*43758.5453);
+  /* FILM GRAIN */
+
+  float grain=fract(
+    sin(dot(
+      gl_FragCoord.xy+uTime,
+      vec2(12.9898,78.233)
+    ))*43758.5453
+  );
+
   colour+=(grain-.5)*.025;
 
-  float edge=1.0-smoothstep(.985,1.0,r);
-  gl_FragColor=vec4(mix(vec3(0.),colour,edge),1.);
+  /* FAINT RED AND GREEN OPTICAL RINGS */
+
+  float redRing=
+    exp(-pow((r-.974)/.0045,2.0));
+
+  float greenRing=
+    exp(-pow((r-.990)/.0045,2.0));
+
+  colour.r+=redRing*.13;
+  colour.g+=greenRing*.085;
+
+  /* SOFTENED OUTER LENS BOUNDARY */
+
+  float edgeFade=
+    1.0-smoothstep(.994,1.0,r);
+
+  colour*=edgeFade;
+
+  gl_FragColor=vec4(colour,1.0);
 }`;
 
 function createShader(type,source){
+
   const shader=gl.createShader(type);
+
   gl.shaderSource(shader,source);
   gl.compileShader(shader);
+
   if(!gl.getShaderParameter(shader,gl.COMPILE_STATUS)){
     throw new Error(gl.getShaderInfoLog(shader));
   }
+
   return shader;
 }
 
 function setupWebGL(){
+
   if(!gl) throw new Error("WebGL is unavailable.");
 
-  const vs=createShader(gl.VERTEX_SHADER,vertexShaderSource);
-  const fs=createShader(gl.FRAGMENT_SHADER,fragmentShaderSource);
+  const vs=createShader(
+    gl.VERTEX_SHADER,
+    vertexShaderSource
+  );
+
+  const fs=createShader(
+    gl.FRAGMENT_SHADER,
+    fragmentShaderSource
+  );
 
   program=gl.createProgram();
+
   gl.attachShader(program,vs);
   gl.attachShader(program,fs);
   gl.linkProgram(program);
@@ -486,176 +595,362 @@ function setupWebGL(){
   gl.useProgram(program);
 
   const buffer=gl.createBuffer();
-  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
-    -1,-1,1,-1,-1,1,1,1
-  ]),gl.STATIC_DRAW);
 
-  const position=gl.getAttribLocation(program,"position");
+  gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
+
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([
+      -1,-1,
+       1,-1,
+      -1, 1,
+       1, 1
+    ]),
+    gl.STATIC_DRAW
+  );
+
+  const position=gl.getAttribLocation(
+    program,
+    "position"
+  );
+
   gl.enableVertexAttribArray(position);
-  gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
+
+  gl.vertexAttribPointer(
+    position,
+    2,
+    gl.FLOAT,
+    false,
+    0,
+    0
+  );
 
   texture=gl.createTexture();
+
   gl.bindTexture(gl.TEXTURE_2D,texture);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
+
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_S,
+    gl.CLAMP_TO_EDGE
+  );
+
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_WRAP_T,
+    gl.CLAMP_TO_EDGE
+  );
+
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MIN_FILTER,
+    gl.LINEAR
+  );
+
+  gl.texParameteri(
+    gl.TEXTURE_2D,
+    gl.TEXTURE_MAG_FILTER,
+    gl.LINEAR
+  );
+
+  gl.pixelStorei(
+    gl.UNPACK_FLIP_Y_WEBGL,
+    true
+  );
 }
 
 function resizeCanvas(){
+
   const dpr=Math.min(devicePixelRatio||1,2);
+
   const width=Math.round(innerWidth*dpr);
   const height=Math.round(innerHeight*dpr);
 
   if(canvas.width!==width||canvas.height!==height){
+
     canvas.width=width;
     canvas.height=height;
+
   }
 
-  if(gl) gl.viewport(0,0,canvas.width,canvas.height);
+  if(gl){
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
 }
 
 function render(now=0){
+
   if(!gl||!program) return;
 
   if(video.readyState>=video.HAVE_CURRENT_DATA){
+
     gl.useProgram(program);
+
     gl.bindTexture(gl.TEXTURE_2D,texture);
 
     try{
-      gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
+
+      gl.texImage2D(
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        video
+      );
+
     }catch(e){}
 
-    gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
-    gl.uniform2f(gl.getUniformLocation(program,"uResolution"),canvas.width,canvas.height);
-    gl.uniform2f(gl.getUniformLocation(program,"uVideoResolution"),video.videoWidth||1,video.videoHeight||1);
-    gl.uniform1f(gl.getUniformLocation(program,"uShape"),lensShape);
-    gl.uniform1f(gl.getUniformLocation(program,"uTime"),now*.001);
+    gl.uniform1i(
+      gl.getUniformLocation(program,"uVideo"),
+      0
+    );
 
-    gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
+    gl.uniform2f(
+      gl.getUniformLocation(program,"uResolution"),
+      canvas.width,
+      canvas.height
+    );
+
+    gl.uniform2f(
+      gl.getUniformLocation(program,"uVideoResolution"),
+      video.videoWidth||1,
+      video.videoHeight||1
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uShape"),
+      lensShape
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uTime"),
+      now*.001
+    );
+
+    gl.drawArrays(
+      gl.TRIANGLE_STRIP,
+      0,
+      4
+    );
   }
 
   animationFrame=requestAnimationFrame(render);
 }
 
 async function startCamera(){
+
   errorMessage.textContent="";
   startButton.textContent="OPENING CAMERA";
 
   try{
+
     if(!navigator.mediaDevices?.getUserMedia){
-      throw new Error("Open REWIND in Safari using its HTTPS address.");
+
+      throw new Error(
+        "Open REWIND in Safari using its HTTPS address."
+      );
+
     }
 
     if(cameraStream){
-      cameraStream.getTracks().forEach(track=>track.stop());
+
+      cameraStream.getTracks().forEach(
+        track=>track.stop()
+      );
+
     }
 
     cameraStream=await navigator.mediaDevices.getUserMedia({
+
       audio:true,
+
       video:{
         facingMode:{ideal:facingMode},
         width:{ideal:1920},
         height:{ideal:1080}
       }
+
     });
 
     video.srcObject=cameraStream;
+
     await video.play();
+
     cameraReady=true;
 
-    if(!program) setupWebGL();
+    if(!program){
+      setupWebGL();
+    }
 
     startScreen.style.display="none";
+
     resizeCanvas();
+
     cancelAnimationFrame(animationFrame);
+
     animationFrame=requestAnimationFrame(render);
 
   }catch(error){
+
     console.error(error);
-    errorMessage.textContent=error.message||"Unable to access the camera. Check camera permissions.";
+
+    errorMessage.textContent=
+      error.message||
+      "Unable to access the camera. Check camera permissions.";
+
     startButton.textContent="TRY AGAIN";
+
   }
 }
 
 startButton.addEventListener("click",startCamera);
 
-document.getElementById("flipButton").addEventListener("click",async()=>{
-  if(recording){
-    showStatus("STOP RECORDING FIRST");
-    return;
-  }
+document.getElementById("flipButton").addEventListener(
+  "click",
+  async()=>{
 
-  facingMode=facingMode==="environment"?"user":"environment";
-  await startCamera();
-});
+    if(recording){
+
+      showStatus("STOP RECORDING FIRST");
+      return;
+
+    }
+
+    facingMode=
+      facingMode==="environment"
+      ?"user"
+      :"environment";
+
+    await startCamera();
+
+  }
+);
 
 function setLens(shape){
+
   lensShape=shape;
-  document.getElementById("circleButton").classList.toggle("active",shape===0);
-  document.getElementById("ovalButton").classList.toggle("active",shape===1);
+
+  document.getElementById("circleButton")
+    .classList.toggle("active",shape===0);
+
+  document.getElementById("ovalButton")
+    .classList.toggle("active",shape===1);
+
 }
 
-document.getElementById("circleButton").addEventListener("click",()=>setLens(0));
-document.getElementById("ovalButton").addEventListener("click",()=>setLens(1));
+document.getElementById("circleButton")
+  .addEventListener("click",()=>setLens(0));
+
+document.getElementById("ovalButton")
+  .addEventListener("click",()=>setLens(1));
 
 function showStatus(message){
+
   statusMessage.textContent=message;
+
   statusMessage.classList.add("show");
+
   clearTimeout(statusTimeout);
-  statusTimeout=setTimeout(()=>statusMessage.classList.remove("show"),2200);
+
+  statusTimeout=setTimeout(
+    ()=>statusMessage.classList.remove("show"),
+    2200
+  );
+
 }
 
 async function saveFile(blob,filename){
-  const file=new File([blob],filename,{type:blob.type});
 
-  if(navigator.share&&navigator.canShare?.({files:[file]})){
+  const file=new File(
+    [blob],
+    filename,
+    {type:blob.type}
+  );
+
+  if(
+    navigator.share&&
+    navigator.canShare?.({files:[file]})
+  ){
+
     try{
-      await navigator.share({files:[file],title:"REWIND"});
+
+      await navigator.share({
+        files:[file],
+        title:"REWIND"
+      });
+
       return;
+
     }catch(error){
+
       if(error.name==="AbortError") return;
+
     }
+
   }
 
   const url=URL.createObjectURL(blob);
+
   const link=document.createElement("a");
+
   link.href=url;
   link.download=filename;
+
   document.body.appendChild(link);
+
   link.click();
   link.remove();
 
-  setTimeout(()=>URL.revokeObjectURL(url),15000);
+  setTimeout(
+    ()=>URL.revokeObjectURL(url),
+    15000
+  );
+
 }
 
 function takePhoto(){
+
   if(!cameraReady||recording) return;
 
   canvas.toBlob(async blob=>{
+
     if(!blob){
+
       showStatus("PHOTO COULD NOT BE SAVED");
       return;
+
     }
 
-    await saveFile(blob,"REWIND-"+Date.now()+".jpg");
+    await saveFile(
+      blob,
+      "REWIND-"+Date.now()+".jpg"
+    );
+
     showStatus("PHOTO CAPTURED");
+
   },"image/jpeg",.96);
+
 }
 
 function startRecording(){
+
   if(!cameraReady||recording) return;
 
   if(!canvas.captureStream||!window.MediaRecorder){
+
     showStatus("VIDEO RECORDING NOT SUPPORTED");
     return;
+
   }
 
   try{
+
     const recordingStream=canvas.captureStream(30);
-    cameraStream.getAudioTracks().forEach(track=>recordingStream.addTrack(track));
+
+    cameraStream.getAudioTracks().forEach(
+      track=>recordingStream.addTrack(track)
+    );
 
     const formats=[
       "video/mp4;codecs=avc1.42E01E",
@@ -665,74 +960,132 @@ function startRecording(){
       "video/webm"
     ];
 
-    const mimeType=formats.find(type=>MediaRecorder.isTypeSupported(type));
-    recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:{});
+    const mimeType=formats.find(
+      type=>MediaRecorder.isTypeSupported(type)
+    );
+
+    recorder=new MediaRecorder(
+      recordingStream,
+      mimeType?{mimeType}:{}
+    );
+
     recordedChunks=[];
 
     recorder.ondataavailable=event=>{
-      if(event.data?.size) recordedChunks.push(event.data);
+
+      if(event.data?.size){
+        recordedChunks.push(event.data);
+      }
+
     };
 
     recorder.onerror=event=>{
+
       console.error(event);
       showStatus("RECORDING ERROR");
+
     };
 
     recorder.onstop=async()=>{
-      const type=recorder.mimeType||"video/webm";
-      const extension=type.includes("mp4")?"mp4":"webm";
-      const blob=new Blob(recordedChunks,{type});
 
-      recordingStream.getTracks().forEach(track=>track.stop());
+      const type=recorder.mimeType||"video/webm";
+
+      const extension=
+        type.includes("mp4")
+        ?"mp4"
+        :"webm";
+
+      const blob=new Blob(
+        recordedChunks,
+        {type}
+      );
+
+      recordingStream.getTracks().forEach(
+        track=>track.stop()
+      );
 
       if(blob.size){
-        await saveFile(blob,"REWIND-VIDEO-"+Date.now()+"."+extension);
+
+        await saveFile(
+          blob,
+          "REWIND-VIDEO-"+Date.now()+"."+extension
+        );
+
         showStatus("VIDEO READY TO SAVE");
+
       }else{
+
         showStatus("VIDEO COULD NOT BE SAVED");
+
       }
 
       recordedChunks=[];
+
     };
 
     recorder.start(250);
+
     recording=true;
     recordingStartedAt=Date.now();
 
     shutter.classList.add("recording");
+
     recordingLabel.classList.add("active");
-    instruction.textContent="TAP AGAIN TO STOP RECORDING";
+
+    instruction.textContent=
+      "TAP AGAIN TO STOP RECORDING";
 
     updateRecordingClock();
-    recordingClock=setInterval(updateRecordingClock,250);
+
+    recordingClock=setInterval(
+      updateRecordingClock,
+      250
+    );
 
   }catch(error){
+
     console.error(error);
     showStatus("COULD NOT START RECORDING");
+
   }
+
 }
 
 function stopRecording(){
+
   if(!recording||!recorder) return;
 
   recording=false;
+
   clearInterval(recordingClock);
 
   shutter.classList.remove("recording");
-  recordingLabel.classList.remove("active");
-  instruction.textContent="TAP PHOTO · HOLD 2 SECONDS TO RECORD";
 
-  if(recorder.state!=="inactive") recorder.stop();
+  recordingLabel.classList.remove("active");
+
+  instruction.textContent=
+    "TAP PHOTO · HOLD 2 SECONDS TO RECORD";
+
+  if(recorder.state!=="inactive"){
+    recorder.stop();
+  }
+
 }
 
 function updateRecordingClock(){
+
   if(!recording) return;
 
-  const seconds=Math.floor((Date.now()-recordingStartedAt)/1000);
+  const seconds=Math.floor(
+    (Date.now()-recordingStartedAt)/1000
+  );
 
-  recordingTime.textContent="REC "+
-    String(Math.floor(seconds/60)).padStart(2,"0")+":"+
+  recordingTime.textContent=
+    "REC "+
+    String(Math.floor(seconds/60)).padStart(2,"0")+
+    ":"+
     String(seconds%60).padStart(2,"0");
+
 }
 
 /* SHUTTER:
@@ -741,8 +1094,11 @@ function updateRecordingClock(){
    Release = continue recording.
    Next tap = stop video.
 */
+
 function shutterDown(event){
+
   event.preventDefault();
+
   if(!cameraReady) return;
 
   pointerDown=true;
@@ -753,66 +1109,102 @@ function shutterDown(event){
   shutter.classList.add("holding");
 
   holdTimer=setTimeout(()=>{
+
     if(!pointerDown) return;
 
     longPressTriggered=true;
+
     shutter.classList.remove("holding");
+
     startRecording();
 
   },2000);
+
 }
 
 function shutterUp(event){
+
   event.preventDefault();
+
   if(!pointerDown) return;
 
   pointerDown=false;
 
   if(holdTimer){
+
     clearTimeout(holdTimer);
     holdTimer=null;
+
   }
 
   shutter.classList.remove("holding");
 
   if(recording){
+
     if(longPressTriggered) return;
+
     stopRecording();
     return;
+
   }
 
-  if(!longPressTriggered) takePhoto();
+  if(!longPressTriggered){
+    takePhoto();
+  }
+
 }
 
 function shutterCancel(){
+
   pointerDown=false;
 
   if(holdTimer){
+
     clearTimeout(holdTimer);
     holdTimer=null;
+
   }
 
   shutter.classList.remove("holding");
+
 }
 
 shutter.addEventListener("pointerdown",shutterDown);
 shutter.addEventListener("pointerup",shutterUp);
 shutter.addEventListener("pointercancel",shutterCancel);
-shutter.addEventListener("contextmenu",event=>event.preventDefault());
+
+shutter.addEventListener(
+  "contextmenu",
+  event=>event.preventDefault()
+);
 
 window.addEventListener("resize",resizeCanvas);
-window.addEventListener("orientationchange",()=>setTimeout(resizeCanvas,250));
+
+window.addEventListener(
+  "orientationchange",
+  ()=>setTimeout(resizeCanvas,250)
+);
 
 window.addEventListener("pagehide",()=>{
+
   cancelAnimationFrame(animationFrame);
+
   clearInterval(recordingClock);
 
-  if(holdTimer) clearTimeout(holdTimer);
+  if(holdTimer){
+    clearTimeout(holdTimer);
+  }
 
   if(cameraStream){
-    cameraStream.getTracks().forEach(track=>track.stop());
+
+    cameraStream.getTracks().forEach(
+      track=>track.stop()
+    );
+
   }
+
 });
+
 </script>
 </body>
 </html>

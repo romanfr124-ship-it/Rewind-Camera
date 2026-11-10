@@ -635,6 +635,8 @@ let recording = false;
 let recordingStartedAt = 0;
 let recordingClock = null;
 let lensShape = 0;
+let displayLensShape = 0;
+let lensTransitionFrame = null;
 let animationFrame = null;
 let texture = null;
 let program = null;
@@ -678,89 +680,34 @@ uniform float uTime;
 uniform float uZoom;
 
 void main(){
-
   vec2 p = (vUv - .5) * 2.0;
-
   float aspect = uResolution.x / uResolution.y;
-
-  // Physical screen coordinates.
   p.x *= aspect;
 
   float radiusX = aspect * .94;
-  float radiusY = radiusX;
-
-  vec2 lens = vec2(p.x / radiusX, p.y / radiusY);
-
+  vec2 lens = vec2(p.x / radiusX, p.y / radiusX);
   float angle = atan(lens.y,lens.x);
   float rawRadius = length(lens);
 
-  // Slight irregularity in the circular lens boundary.
   float edgeDistortion =
       sin(angle * 5.0 + .4) * .004
     + sin(angle * 9.0 + 1.2) * .0025
     + sin(angle * 13.0 + 2.1) * .0012;
+  float r = rawRadius / (1.0 + edgeDistortion);
 
-  float edgeRadius = 1.0 + edgeDistortion;
-  float r = rawRadius / edgeRadius;
+  vec2 direction = rawRadius > .0001 ? lens / rawRadius : vec2(0.0);
+  float circleMapped = r + .34 * pow(r,4.0) * (1.0-r);
+  vec2 circleWarped = direction * circleMapped;
 
-  // Allow a small area outside the lens for the blue optical halo.
-  if(uShape < .5 && r > 1.055){
-    gl_FragColor = vec4(0.,0.,0.,1.);
-    return;
-  }
+  float radial = length(p);
+  vec2 screenDirection = radial > .0001 ? p / radial : vec2(0.0);
+  vec2 fullWarped = screenDirection * (radial * (1.0-.16*pow(radial,2.0)));
 
-  // Render the soft blue halo outside the circular lens boundary.
-  // This follows the same irregular edge as the lens itself.
-  if(uShape < .5 && r > 1.0){
-    float halo = 1.0 - smoothstep(1.0,1.055,r);
-    float haloStrength = halo * .045;
-    vec3 blueHalo = vec3(.015,.075,.30) * haloStrength;
+  // Smoothly morph the actual lens mapping instead of switching abruptly.
+  vec2 warped = mix(circleWarped,fullWarped,uShape);
 
-    gl_FragColor = vec4(blueHalo,1.0);
-    return;
-  }
-
-  float mapped;
-
-  if(uShape < .5){
-
-    // Circular fisheye warping.
-    float edgeCurve = pow(r,4.0) * (1.0-r);
-    mapped = r + .34 * edgeCurve;
-
-  }else{
-
-    // Full-frame fisheye warping.
-    float radial = length(p);
-    float strength = .16;
-    float curve = pow(radial,3.0);
-    mapped = radial * (1.0-strength*curve);
-  }
-
-  vec2 direction =
-    rawRadius > .0001 ? lens / rawRadius : vec2(0.);
-
-  vec2 warped;
-
-  if(uShape < .5){
-
-    warped = direction * mapped;
-
-  }else{
-
-    float radial = length(p);
-    vec2 screenDirection =
-      radial > .0001 ? p / radial : vec2(0.);
-
-    warped = screenDirection *
-      (radial * (1.0-.16*pow(radial,2.0)));
-  }
-
-  // Calculate the source image mapping while preserving aspect ratio.
   float videoAspect = uVideoResolution.x / uVideoResolution.y;
-
   vec2 uv = vec2(.5);
-
   if(videoAspect > aspect){
     uv.x += warped.x * (aspect/videoAspect) * .5;
     uv.y += warped.y * .5;
@@ -769,79 +716,52 @@ void main(){
     uv.y += warped.y * (videoAspect/aspect) * .5;
   }
 
-  // Zoom is applied to the source sampling, before optical effects.
-  // This keeps the lens distortion active at every zoom level.
-  uv = vec2(.5) + (uv - vec2(.5)) / uZoom;
-
-  // Prevent edge smearing when the expanded image reaches its limits.
-  if(uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0){
+  uv = vec2(.5) + (uv-vec2(.5))/uZoom;
+  if(uv.x<0.0 || uv.x>1.0 || uv.y<0.0 || uv.y>1.0){
     gl_FragColor = vec4(0.,0.,0.,1.);
     return;
   }
 
-  float aberration = pow(min(r,1.0),3.0) * .006;
-  vec2 offset = direction * aberration;
-
-  vec2 redUV = clamp(uv+offset,vec2(.001),vec2(.999));
-  vec2 blueUV = clamp(uv-offset,vec2(.001),vec2(.999));
-
-  float red = texture2D(uVideo,redUV).r;
+  float aberration = pow(min(r,1.0),3.0)*.006;
+  vec2 offset = direction*aberration;
+  float red = texture2D(uVideo,clamp(uv+offset,vec2(.001),vec2(.999))).r;
   float green = texture2D(uVideo,uv).g;
-  float blue = texture2D(uVideo,blueUV).b;
-
+  float blue = texture2D(uVideo,clamp(uv-offset,vec2(.001),vec2(.999))).b;
   vec3 colour = vec3(red,green,blue);
 
-  float centreGlow = 1.0 + .10 * exp(-r*r*4.0);
-
-  // Circle retains optical falloff and vignette.
-  // Full Frame has no vignette.
+  float centreGlow = 1.0 + .10*exp(-r*r*4.0);
   float circleFalloff =
       (1.0-.28*smoothstep(.25,1.0,r))
     * (1.0-.48*smoothstep(.62,1.0,r));
-
-  float opticalFalloff = uShape < .5 ? circleFalloff : 1.0;
-
-  float directionalLight =
-    1.0 - .09 * smoothstep(-.4,1.0,lens.y);
-
-  colour *= centreGlow * directionalLight * opticalFalloff;
+  float opticalFalloff = mix(circleFalloff,1.0,uShape);
+  float directionalLight = 1.0-.09*smoothstep(-.4,1.0,lens.y);
+  colour *= centreGlow*directionalLight*opticalFalloff;
 
   colour.r *= 1.035;
   colour.g *= 1.005;
   colour.b *= .965;
 
-  // Film grain.
-  float grain = fract(
-    sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))
-    * 43758.5453
-  );
+  float grain = fract(sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))*43758.5453);
+  colour += (grain-.5)*.025;
 
-  colour += (grain-.5) * .025;
+  float redRing = exp(-pow((r-.974)/.0045,2.0));
+  float greenRing = exp(-pow((r-.990)/.0045,2.0));
+  colour.r += redRing*.13*(1.0-uShape);
+  colour.g += greenRing*.085*(1.0-uShape);
 
-  if(uShape < .5){
+  float circleMask = 1.0-smoothstep(.994,1.0,r);
+  colour *= mix(circleMask,1.0,uShape);
 
-    float redRing = exp(-pow((r-.974)/.0045,2.0));
-    float greenRing = exp(-pow((r-.990)/.0045,2.0));
+  float blueEdge = exp(-pow((r-.978)/.022,2.0));
+  float blueStrength = blueEdge*.065*(1.0-uShape);
+  colour = mix(colour,vec3(.035,.16,.48),blueStrength);
+  colour.b += blueEdge*.025*(1.0-uShape);
 
-    colour.r += redRing * .13;
-    colour.g += greenRing * .085;
-
-    colour *= 1.0-smoothstep(.994,1.0,r);
-
-    // Subtle blue optical coating around the entire fisheye perimeter.
-    // Applied after the edge fade so the blue tint remains visible.
-    float blueEdge = exp(-pow((r-.978)/.022,2.0));
-    float blueStrength = blueEdge * .065;
-
-    colour = mix(
-      colour,
-      vec3(.035,.16,.48),
-      blueStrength
-    );
-
-    colour.b += blueEdge*.025;
-
-  }
+  // The circular edge and its halo fade away continuously during the morph.
+  float outsideCircle = smoothstep(1.0,1.055,r)*(1.0-uShape);
+  float halo = (1.0-smoothstep(1.0,1.055,r))*.045*(1.0-uShape);
+  vec3 haloColour = vec3(.015,.075,.30)*halo;
+  colour = mix(colour,haloColour,outsideCircle);
 
   gl_FragColor = vec4(colour,1.0);
 }`;
@@ -945,7 +865,7 @@ function render(now=0){
       );
     }catch(e){}
 
-    const activeShape = slowProcessing ? slowLensShape : lensShape;
+    const activeShape = slowProcessing ? slowLensShape : displayLensShape;
     const selectedZoom = slowProcessing ? slowZoomLevel : zoomLevel;
     const activeUltraWide = slowProcessing ? slowLensShape===1 && ultraWideActive : ultraWideActive;
     const activeZoom = selectedZoom * (activeUltraWide ? 1.4 : 1.0);
@@ -1111,31 +1031,61 @@ async function switchPhysicalCamera(deviceId,isUltraWide){
   }
 }
 
-async function setLens(shape){
+function animateLensTo(shape){
+  cancelAnimationFrame(lensTransitionFrame);
+
+  const from = displayLensShape;
+  const to = shape;
+  const startedAt = performance.now();
+  const duration = 320;
+
+  function frame(now){
+    const progress = Math.min(1,(now-startedAt)/duration);
+    // Smooth ease-in-out with no abrupt start or stop.
+    const eased = progress<.5
+      ? 4*progress*progress*progress
+      : 1-Math.pow(-2*progress+2,3)/2;
+
+    displayLensShape = from+(to-from)*eased;
+
+    if(progress<1){
+      lensTransitionFrame = requestAnimationFrame(frame);
+    }else{
+      displayLensShape = to;
+      lensTransitionFrame = null;
+    }
+  }
+
+  lensTransitionFrame = requestAnimationFrame(frame);
+}
+
+function setLens(shape){
+  if(shape===lensShape) return;
+
   lensShape = shape;
-
   mainLogo.classList.toggle("full-frame",shape===1);
+  animateLensTo(shape);
+  updateZoomInterface();
 
-  // Switch to the physical ultra-wide camera only when Safari exposes it.
-  // The normal 1.0x UI value is calibrated to a 1.4x crop of the 0.5x lens,
-  // giving an approximate 0.7x field of view while retaining the 1.0x label.
+  // Start the physical lens change independently. The visual morph keeps
+  // running while Safari prepares the new camera stream.
   if(shape===1 && ultraWideCameraDeviceId){
-    const switched = await switchPhysicalCamera(ultraWideCameraDeviceId,true);
-    if(!switched) showStatus("ULTRA-WIDE LENS COULD NOT BE SELECTED");
-  } else if(shape===0 && defaultCameraDeviceId){
-    const switched = await switchPhysicalCamera(defaultCameraDeviceId,false);
-    if(!switched) showStatus("COULD NOT RESTORE MAIN CAMERA");
-  } else if(shape===1 && !ultraWideCameraDeviceId){
+    switchPhysicalCamera(ultraWideCameraDeviceId,true).then(switched=>{
+      if(!switched) showStatus("ULTRA-WIDE LENS COULD NOT BE SELECTED");
+    });
+  }else if(shape===0 && defaultCameraDeviceId){
+    switchPhysicalCamera(defaultCameraDeviceId,false).then(switched=>{
+      if(!switched) showStatus("COULD NOT RESTORE MAIN CAMERA");
+    });
+  }else if(shape===1 && !ultraWideCameraDeviceId){
     ultraWideActive = false;
     showStatus("ULTRA-WIDE LENS NOT EXPOSED BY SAFARI");
   }
 
-  // Circle mode cannot zoom below 1x.
   if(shape===0 && zoomLevel<1){
     zoomLevel = 1;
+    updateZoomInterface();
   }
-
-  updateZoomInterface();
 }
 
 /* SWIPE LENS CONTROL

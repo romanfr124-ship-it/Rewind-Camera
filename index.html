@@ -748,9 +748,11 @@ void main(){
   float circleMapped = r + .55 * pow(r,3.0) * (1.0-r);
   vec2 circleWarped = direction * circleMapped * lensRadius;
 
-  // Full Frame uses a straight, rectilinear image with no fisheye warp.
-  // Circle mode keeps its original optical mapping.
-  vec2 fullWarped = p;
+  // Full Frame stays mostly natural, with only a very subtle edge bend.
+  // Circle mode's fisheye mapping above is intentionally left untouched.
+  vec2 fullLens = vec2(p.x / aspect,p.y);
+  float fullRadius = length(fullLens);
+  vec2 fullWarped = p * (1.0 + 0.018 * fullRadius * fullRadius);
 
   // Smoothly morph the actual lens mapping instead of switching abruptly.
   vec2 warped = mix(circleWarped,fullWarped,uShape);
@@ -919,7 +921,7 @@ function render(now=0){
     const activeShape = slowProcessing ? slowLensShape : displayLensShape;
     const selectedZoom = slowProcessing ? slowZoomLevel : zoomLevel;
     const activeUltraWide = slowProcessing ? slowLensShape===1 && ultraWideActive : ultraWideActive;
-    const activeZoom = selectedZoom * (activeUltraWide && activeShape > 0.5 ? 1.4 : 1.0);
+    const activeZoom = selectedZoom * (activeUltraWide && activeShape > 0.5 ? 1.2 : 1.0);
 
     gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
 

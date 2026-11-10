@@ -745,7 +745,7 @@ void main(){
 
   vec2 direction = rawRadius > .0001 ? lens / rawRadius : vec2(0.0);
   float circleMapped = r + .34 * pow(r,4.0) * (1.0-r);
-  vec2 circleWarped = direction * circleMapped;
+  vec2 circleWarped = direction * circleMapped * lensRadius;
 
   // Full Frame uses a straight, rectilinear image with no fisheye warp.
   // Circle mode keeps its original optical mapping.

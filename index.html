@@ -1,6 +1,5 @@
 
 
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -118,6 +117,60 @@ body { position:fixed; inset:0; }
   color:white;
   border-color:white;
   background:rgba(255,255,255,.12);
+}
+
+/* ZOOM */
+.zoom-controls {
+  width:min(240px,70vw);
+  margin-bottom:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:9px;
+  pointer-events:auto;
+}
+.zoom-heading {
+  width:100%;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:rgba(255,255,255,.65);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:2px;
+}
+#zoomValue {
+  color:white;
+  font-size:11px;
+  letter-spacing:1px;
+  font-variant-numeric:tabular-nums;
+}
+#zoomSlider {
+  appearance:none;
+  -webkit-appearance:none;
+  width:100%;
+  height:3px;
+  border-radius:10px;
+  outline:none;
+  background:rgba(255,255,255,.35);
+  touch-action:pan-y;
+}
+#zoomSlider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:17px;
+  height:17px;
+  border-radius:50%;
+  background:white;
+  border:2px solid rgba(0,0,0,.7);
+  box-shadow:0 0 0 2px rgba(255,255,255,.15);
+}
+#zoomSlider::-moz-range-thumb {
+  width:14px;
+  height:14px;
+  border-radius:50%;
+  background:white;
+  border:2px solid rgba(0,0,0,.7);
 }
 
 /* BOTTOM */
@@ -334,6 +387,11 @@ body { position:fixed; inset:0; }
   .logo { width:110px; }
   .lens-controls { top:calc(env(safe-area-inset-top) + 12px); }
   .bottom { bottom:calc(env(safe-area-inset-bottom) + 10px); }
+  .zoom-controls {
+    width:190px;
+    margin-bottom:8px;
+    gap:6px;
+  }
   .mode-selector { width:270px; gap:9px; }
   #shutter { width:68px; height:68px; }
   #shutter .inner { width:52px; height:52px; }
@@ -376,6 +434,23 @@ body { position:fixed; inset:0; }
 </div>
 
 <div class="bottom">
+
+  <div class="zoom-controls">
+    <div class="zoom-heading">
+      <span>ZOOM</span>
+      <span id="zoomValue">1.0×</span>
+    </div>
+    <input
+      id="zoomSlider"
+      type="range"
+      min="0.5"
+      max="3"
+      step="0.1"
+      value="1"
+      aria-label="Camera zoom"
+    >
+  </div>
+
   <div class="camera-controls">
     <div class="mode-selector" id="modeSelector">
       <div class="mode-names">
@@ -424,6 +499,8 @@ const statusMessage=document.getElementById("statusMessage");
 const recordingLabel=document.getElementById("recordingLabel");
 const recordingTime=document.getElementById("recordingTime");
 const instruction=document.getElementById("instruction");
+const zoomSlider=document.getElementById("zoomSlider");
+const zoomValue=document.getElementById("zoomValue");
 
 let cameraStream=null;
 let cameraReady=false;
@@ -441,6 +518,12 @@ let currentMode="photo";
 let slowProcessing=false;
 let slowSourceUrl=null;
 
+/* Zoom and slow-motion lens protection */
+let zoomLevel=1;
+let slowLensShape=0;
+let slowVideoWidth=0;
+let slowVideoHeight=0;
+
 const vertexShaderSource=`
 attribute vec2 position;
 varying vec2 vUv;
@@ -457,6 +540,7 @@ uniform vec2 uResolution;
 uniform vec2 uVideoResolution;
 uniform float uShape;
 uniform float uTime;
+uniform float uZoom;
 
 void main(){
 
@@ -507,6 +591,12 @@ void main(){
     warped=screenDirection*(radial*(1.0-.16*pow(radial,2.0)));
   }
 
+  /*
+    Zoom changes the sampled camera area, not the lens boundary.
+    Values above 1 magnify; values below 1 widen the view.
+  */
+  warped/=uZoom;
+
   float videoAspect=uVideoResolution.x/uVideoResolution.y;
   vec2 uv=vec2(.5);
 
@@ -521,7 +611,7 @@ void main(){
   uv=clamp(uv,vec2(.001),vec2(.999));
 
   float aberration=pow(min(r,1.0),3.0)*.006;
-  vec2 offset=direction*aberration;
+  vec2 offset=direction*aberration/uZoom;
 
   float red=texture2D(uVideo,clamp(uv+offset,vec2(.001),vec2(.999))).r;
   float green=texture2D(uVideo,uv).g;
@@ -531,15 +621,12 @@ void main(){
 
   float centreGlow=1.0+.10*exp(-r*r*4.0);
 
-  // Circle retains its optical edge falloff and vignette.
-  // Full Frame receives neither.
   float circleFalloff=
       (1.0-.28*smoothstep(.25,1.0,r))
     * (1.0-.48*smoothstep(.62,1.0,r));
 
   float opticalFalloff=uShape<.5?circleFalloff:1.0;
 
-  // Keep subtle directional light variation in both modes.
   float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
 
   colour*=centreGlow*directionalLight*opticalFalloff;
@@ -637,17 +724,38 @@ function render(now=0){
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
     }catch(e){}
 
+    const sourceWidth=slowProcessing&&slowVideoWidth
+      ?slowVideoWidth
+      :(video.videoWidth||1);
+
+    const sourceHeight=slowProcessing&&slowVideoHeight
+      ?slowVideoHeight
+      :(video.videoHeight||1);
+
     gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
     gl.uniform2f(gl.getUniformLocation(program,"uResolution"),canvas.width,canvas.height);
-    gl.uniform2f(gl.getUniformLocation(program,"uVideoResolution"),video.videoWidth||1,video.videoHeight||1);
-    gl.uniform1f(gl.getUniformLocation(program,"uShape"),lensShape);
+    gl.uniform2f(gl.getUniformLocation(program,"uVideoResolution"),sourceWidth,sourceHeight);
+
+    // Keep the original lens selection throughout slow-motion processing.
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uShape"),
+      slowProcessing?slowLensShape:lensShape
+    );
+
     gl.uniform1f(gl.getUniformLocation(program,"uTime"),now*.001);
+    gl.uniform1f(gl.getUniformLocation(program,"uZoom"),zoomLevel);
 
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
 
   animationFrame=requestAnimationFrame(render);
 }
+
+/* ZOOM CONTROL */
+zoomSlider.addEventListener("input",()=>{
+  zoomLevel=parseFloat(zoomSlider.value);
+  zoomValue.textContent=zoomLevel.toFixed(1)+"×";
+});
 
 async function startCamera(){
   errorMessage.textContent="";
@@ -696,6 +804,11 @@ async function startCamera(){
 startButton.addEventListener("click",startCamera);
 
 function setLens(shape){
+  if(recording||slowProcessing){
+    showStatus("FINISH RECORDING FIRST");
+    return;
+  }
+
   lensShape=shape;
   document.getElementById("circleButton").classList.toggle("active",shape===0);
   document.getElementById("fullButton").classList.toggle("active",shape===1);
@@ -955,13 +1068,7 @@ async function startSlowMotion(){
   }
 }
 
-/*
-  SLOW-MOTION EXPORT
-
-  The original recording is replayed at 0.25x.
-  The processed camera canvas is recorded during that
-  entire playback, producing a file with a longer duration.
-*/
+/* SLOW-MOTION EXPORT */
 async function processSlowMotion(sourceBlob){
   slowProcessing=true;
   recording=false;
@@ -973,6 +1080,11 @@ async function processSlowMotion(sourceBlob){
 
   const originalStream=cameraStream;
 
+  // Preserve the selected lens and exact canvas dimensions.
+  slowLensShape=lensShape;
+  slowVideoWidth=canvas.width;
+  slowVideoHeight=canvas.height;
+
   slowSourceUrl=URL.createObjectURL(sourceBlob);
 
   let outputStream=null;
@@ -980,7 +1092,6 @@ async function processSlowMotion(sourceBlob){
   let outputChunks=[];
 
   try{
-    // Switch the video element from the live camera to the recording.
     video.pause();
     video.srcObject=null;
     video.removeAttribute("src");
@@ -1013,7 +1124,6 @@ async function processSlowMotion(sourceBlob){
       video.load();
     });
 
-    // Wait for an actual decoded frame.
     if(video.readyState<video.HAVE_CURRENT_DATA){
       await new Promise((resolve,reject)=>{
         const ready=()=>{
@@ -1033,11 +1143,10 @@ async function processSlowMotion(sourceBlob){
       });
     }
 
-    // Set the slow speed again after metadata has loaded.
     video.defaultPlaybackRate=.25;
     video.playbackRate=.25;
 
-    if(!video.captureStream && !canvas.captureStream){
+    if(!video.captureStream&&!canvas.captureStream){
       throw new Error("Video capture is not supported.");
     }
 
@@ -1062,7 +1171,6 @@ async function processSlowMotion(sourceBlob){
       },{once:true});
     });
 
-    // Register the ended event BEFORE starting playback.
     const playbackFinished=new Promise((resolve,reject)=>{
       const ended=()=>{
         cleanup();
@@ -1083,28 +1191,22 @@ async function processSlowMotion(sourceBlob){
       video.addEventListener("error",failed,{once:true});
     });
 
-    // Start capturing the processed canvas first.
     outputRecorder.start(250);
 
-    // Give the renderer time to draw the loaded video frame.
     await new Promise(resolve=>requestAnimationFrame(()=>{
       requestAnimationFrame(resolve);
     }));
 
-    // Start slow playback.
     await video.play();
 
-    // Reapply after play in case Safari resets the rate.
     video.playbackRate=.25;
 
     if(Math.abs(video.playbackRate-.25)>.01){
       throw new Error("This browser is not accepting 4x slow playback.");
     }
 
-    // Keep recording until the slowed video has fully finished.
     await playbackFinished;
 
-    // Stop the export recorder only after the entire slowed video.
     if(outputRecorder.state!=="inactive"){
       outputRecorder.stop();
     }
@@ -1138,7 +1240,6 @@ async function processSlowMotion(sourceBlob){
       outputStream.getTracks().forEach(track=>track.stop());
     }
 
-    // Restore the original live camera.
     video.pause();
     video.removeAttribute("src");
     video.srcObject=originalStream;
@@ -1158,6 +1259,8 @@ async function processSlowMotion(sourceBlob){
     }
 
     slowProcessing=false;
+    slowVideoWidth=0;
+    slowVideoHeight=0;
     resetShutter();
   }
 }

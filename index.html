@@ -17,12 +17,14 @@
   --white:#fff;
   --red:#ed2424;
 }
+
 * {
   box-sizing:border-box;
   -webkit-tap-highlight-color:transparent;
   user-select:none;
   -webkit-user-select:none;
 }
+
 html,body {
   width:100%;
   height:100%;
@@ -33,7 +35,11 @@ html,body {
   font-family:Arial,Helvetica,sans-serif;
   touch-action:pan-y;
 }
-body { position:fixed; inset:0; }
+
+body {
+  position:fixed;
+  inset:0;
+}
 
 #cameraCanvas {
   position:absolute;
@@ -43,6 +49,7 @@ body { position:fixed; inset:0; }
   display:block;
   background:var(--black);
 }
+
 #cameraVideo {
   position:absolute;
   width:1px;
@@ -52,17 +59,19 @@ body { position:fixed; inset:0; }
 }
 
 /* CENTRED LOGO */
+
 .top {
   position:absolute;
   z-index:5;
   top:calc(env(safe-area-inset-top) + 20px);
-  left:0;
-  right:0;
+  left:22px;
+  right:22px;
   display:flex;
   justify-content:center;
   align-items:center;
   pointer-events:none;
 }
+
 .logo {
   width:150px;
   height:auto;
@@ -70,18 +79,21 @@ body { position:fixed; inset:0; }
   object-fit:contain;
 }
 
-/* RECORDING */
 .recording-label {
-  position:absolute;
-  right:22px;
   display:none;
   align-items:center;
   gap:8px;
+  position:absolute;
+  right:0;
   font-size:10px;
   font-weight:700;
   letter-spacing:2px;
 }
-.recording-label.active { display:flex; }
+
+.recording-label.active {
+  display:flex;
+}
+
 .recording-dot {
   width:7px;
   height:7px;
@@ -89,9 +101,13 @@ body { position:fixed; inset:0; }
   background:var(--red);
   animation:blink 1s infinite;
 }
-@keyframes blink { 50% {opacity:.25;} }
+
+@keyframes blink {
+  50% {opacity:.25;}
+}
 
 /* LENS SELECTOR */
+
 .lens-controls {
   position:absolute;
   z-index:5;
@@ -101,6 +117,7 @@ body { position:fixed; inset:0; }
   display:flex;
   gap:8px;
 }
+
 .small-control {
   min-width:65px;
   padding:9px 14px;
@@ -114,6 +131,7 @@ body { position:fixed; inset:0; }
   backdrop-filter:blur(8px);
   -webkit-backdrop-filter:blur(8px);
 }
+
 .small-control.active {
   color:white;
   border-color:white;
@@ -121,17 +139,19 @@ body { position:fixed; inset:0; }
 }
 
 /* BOTTOM CAMERA CONTROLS */
+
 .bottom {
   position:absolute;
   z-index:5;
   left:0;
   right:0;
-  bottom:calc(env(safe-area-inset-bottom) + 48px);
+  bottom:calc(env(safe-area-inset-bottom) + 30px);
   display:flex;
   flex-direction:column;
   align-items:center;
   pointer-events:none;
 }
+
 .camera-controls {
   position:relative;
   width:100%;
@@ -142,82 +162,16 @@ body { position:fixed; inset:0; }
 }
 
 /* MODE SELECTOR */
+
 .mode-selector {
-  width:min(330px, 90vw);
+  width:min(290px,88vw);
   display:flex;
   flex-direction:column;
   align-items:center;
-  gap:13px;
+  gap:12px;
   touch-action:pan-y;
 }
 
-/* ZOOM ADJUSTER */
-.zoom-panel {
-  width:100%;
-  display:flex;
-  flex-direction:column;
-  gap:7px;
-  padding:0 15px;
-  max-height:0;
-  opacity:0;
-  overflow:hidden;
-  transform:translateY(8px);
-  pointer-events:none;
-  transition:
-    max-height .28s ease,
-    opacity .22s ease,
-    transform .28s ease;
-}
-.zoom-panel.open {
-  max-height:65px;
-  opacity:1;
-  transform:translateY(0);
-  pointer-events:auto;
-}
-.zoom-readout {
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  font-size:9px;
-  font-weight:700;
-  letter-spacing:2px;
-  color:rgba(255,255,255,.72);
-}
-#zoomValue {
-  color:white;
-  font-size:12px;
-  letter-spacing:1px;
-  font-variant-numeric:tabular-nums;
-}
-#zoomSlider {
-  appearance:none;
-  -webkit-appearance:none;
-  width:100%;
-  height:4px;
-  border-radius:10px;
-  outline:none;
-  background:rgba(255,255,255,.38);
-  touch-action:pan-x;
-}
-#zoomSlider::-webkit-slider-thumb {
-  appearance:none;
-  -webkit-appearance:none;
-  width:19px;
-  height:19px;
-  border-radius:50%;
-  background:white;
-  border:3px solid rgba(255,255,255,.35);
-  box-shadow:0 0 0 3px rgba(0,0,0,.45);
-}
-#zoomSlider::-moz-range-thumb {
-  width:15px;
-  height:15px;
-  border-radius:50%;
-  background:white;
-  border:2px solid rgba(255,255,255,.35);
-}
-
-/* MODE NAMES */
 .mode-names {
   width:100%;
   display:flex;
@@ -225,6 +179,7 @@ body { position:fixed; inset:0; }
   align-items:center;
   overflow:visible;
 }
+
 .mode-name {
   flex:1;
   min-width:0;
@@ -249,6 +204,7 @@ body { position:fixed; inset:0; }
   -webkit-appearance:none;
   appearance:none;
 }
+
 .mode-name.active {
   color:white;
   opacity:1;
@@ -257,6 +213,7 @@ body { position:fixed; inset:0; }
 }
 
 /* SHUTTER AND ZOOM BUTTON */
+
 .shutter-row {
   width:100%;
   display:flex;
@@ -264,6 +221,7 @@ body { position:fixed; inset:0; }
   align-items:center;
   position:relative;
 }
+
 #shutter {
   width:78px;
   height:78px;
@@ -276,8 +234,9 @@ body { position:fixed; inset:0; }
   position:relative;
   touch-action:pan-y;
   outline:none;
-  transition:border-color .2s, background .2s;
+  transition:border-color .2s,background .2s;
 }
+
 #shutter::before {
   content:"";
   position:absolute;
@@ -285,6 +244,7 @@ body { position:fixed; inset:0; }
   border:1px solid rgba(255,255,255,.22);
   border-radius:50%;
 }
+
 #shutter .inner {
   width:60px;
   height:60px;
@@ -293,55 +253,34 @@ body { position:fixed; inset:0; }
   transition:all .18s ease;
 }
 
-/* ZOOM BUTTON */
-#zoomToggle {
-  position:absolute;
-  left:calc(50% + 57px);
-  width:43px;
-  height:43px;
-  border:1px solid rgba(255,255,255,.38);
-  border-radius:50%;
-  background:rgba(0,0,0,.48);
-  color:white;
-  font-family:inherit;
-  font-size:10px;
-  font-weight:700;
-  letter-spacing:.5px;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  backdrop-filter:blur(8px);
-  -webkit-backdrop-filter:blur(8px);
-  transition:background .2s,border-color .2s,transform .2s;
-}
-#zoomToggle.active {
-  background:rgba(255,255,255,.18);
-  border-color:white;
-  transform:scale(1.06);
+#shutter.video-mode {
+  border-color:var(--red);
 }
 
-/* VIDEO */
-#shutter.video-mode { border-color:var(--red); }
 #shutter.video-mode .inner {
   width:60px;
   height:60px;
   border-radius:50%;
   background:var(--red);
 }
+
 #shutter.video-mode.recording .inner {
   width:38px;
   height:38px;
   border-radius:7px;
 }
 
-/* SLOW MOTION */
-#shutter.slow-mode { border-color:#d9d9d9; }
+#shutter.slow-mode {
+  border-color:#d9d9d9;
+}
+
 #shutter.slow-mode .inner {
   width:60px;
   height:60px;
   border-radius:50%;
   background:#d9d9d9;
 }
+
 #shutter.slow-mode.recording .inner {
   width:38px;
   height:38px;
@@ -349,7 +288,108 @@ body { position:fixed; inset:0; }
   background:var(--red);
 }
 
+/* ZOOM BUTTON */
+
+#zoomToggle {
+  position:absolute;
+  left:calc(50% + 66px);
+  top:50%;
+  transform:translateY(-50%);
+  min-width:55px;
+  height:42px;
+  padding:0 10px;
+  border:1px solid rgba(255,255,255,.35);
+  border-radius:25px;
+  background:rgba(0,0,0,.65);
+  color:white;
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:1px;
+  backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
+  transition:background .2s,border-color .2s;
+}
+
+#zoomToggle.active {
+  border-color:white;
+  background:rgba(255,255,255,.16);
+}
+
+/* ZOOM ADJUSTER */
+
+#zoomPanel {
+  width:100%;
+  display:none;
+  flex-direction:column;
+  gap:8px;
+  padding:10px 15px 5px;
+  animation:zoomAppear .2s ease;
+}
+
+#zoomPanel.open {
+  display:flex;
+}
+
+@keyframes zoomAppear {
+  from {
+    opacity:0;
+    transform:translateY(6px);
+  }
+  to {
+    opacity:1;
+    transform:translateY(0);
+  }
+}
+
+.zoom-heading {
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  color:rgba(255,255,255,.65);
+  font-size:9px;
+  font-weight:700;
+  letter-spacing:2px;
+}
+
+#zoomValue {
+  color:white;
+  font-size:12px;
+  letter-spacing:1px;
+}
+
+#zoomSlider {
+  width:100%;
+  height:4px;
+  margin:7px 0;
+  appearance:none;
+  -webkit-appearance:none;
+  border-radius:10px;
+  outline:none;
+  background:rgba(255,255,255,.35);
+  touch-action:pan-x;
+}
+
+#zoomSlider::-webkit-slider-thumb {
+  appearance:none;
+  -webkit-appearance:none;
+  width:20px;
+  height:20px;
+  border-radius:50%;
+  background:white;
+  border:3px solid rgba(0,0,0,.35);
+  box-shadow:0 0 0 3px rgba(255,255,255,.18);
+}
+
+#zoomSlider::-moz-range-thumb {
+  width:15px;
+  height:15px;
+  border-radius:50%;
+  background:white;
+  border:3px solid rgba(0,0,0,.35);
+}
+
 /* START SCREEN */
+
 #startScreen {
   position:absolute;
   z-index:10;
@@ -362,11 +402,13 @@ body { position:fixed; inset:0; }
   padding:30px;
   text-align:center;
 }
+
 .start-logo {
   width:min(75vw,330px);
   height:auto;
   margin-bottom:35px;
 }
+
 #startScreen p {
   max-width:270px;
   color:#888;
@@ -375,6 +417,7 @@ body { position:fixed; inset:0; }
   letter-spacing:1px;
   margin:0 0 28px;
 }
+
 #startButton {
   border:1px solid white;
   background:white;
@@ -385,6 +428,7 @@ body { position:fixed; inset:0; }
   font-weight:800;
   letter-spacing:2px;
 }
+
 #errorMessage {
   color:#e66;
   font-size:11px;
@@ -392,6 +436,7 @@ body { position:fixed; inset:0; }
   max-width:290px;
   margin-top:20px;
 }
+
 #statusMessage {
   position:absolute;
   z-index:8;
@@ -406,35 +451,90 @@ body { position:fixed; inset:0; }
   pointer-events:none;
   transition:opacity .2s;
 }
-#statusMessage.show { opacity:1; }
+
+#statusMessage.show {
+  opacity:1;
+}
 
 @media (orientation:landscape) {
-  .top { top:calc(env(safe-area-inset-top) + 10px); }
-  .logo { width:110px; }
-  .lens-controls { top:calc(env(safe-area-inset-top) + 12px); }
-  .bottom { bottom:calc(env(safe-area-inset-bottom) + 18px); }
-  .mode-selector { width:290px; gap:8px; }
-  #shutter { width:68px; height:68px; }
-  #shutter .inner { width:52px; height:52px; }
+  .top {
+    top:calc(env(safe-area-inset-top) + 10px);
+  }
+
+  .logo {
+    width:110px;
+  }
+
+  .lens-controls {
+    top:calc(env(safe-area-inset-top) + 12px);
+  }
+
+  .bottom {
+    bottom:calc(env(safe-area-inset-bottom) + 12px);
+  }
+
+  .mode-selector {
+    width:270px;
+    gap:7px;
+  }
+
+  #shutter {
+    width:68px;
+    height:68px;
+  }
+
+  #shutter .inner {
+    width:52px;
+    height:52px;
+  }
+
   #shutter.video-mode .inner,
-  #shutter.slow-mode .inner { width:52px; height:52px; }
+  #shutter.slow-mode .inner {
+    width:52px;
+    height:52px;
+  }
+
   #shutter.video-mode.recording .inner,
   #shutter.slow-mode.recording .inner {
     width:34px;
     height:34px;
   }
+
   #zoomToggle {
-    left:calc(50% + 51px);
-    width:39px;
-    height:39px;
+    left:calc(50% + 60px);
   }
 }
+
+@media (max-height:650px) {
+  .bottom {
+    bottom:calc(env(safe-area-inset-bottom) + 8px);
+  }
+
+  .mode-selector {
+    gap:5px;
+  }
+
+  #shutter {
+    width:64px;
+    height:64px;
+  }
+
+  #shutter .inner {
+    width:48px;
+    height:48px;
+  }
+
+  #shutter.video-mode .inner,
+  #shutter.slow-mode .inner {
+    width:48px;
+    height:48px;
+  }
+}
+
 @media (prefers-reduced-motion:reduce) {
   .mode-name,
   #shutter,
-  #shutter .inner,
-  .zoom-panel,
-  #zoomToggle {
+  #shutter .inner {
     transition:none;
   }
 }
@@ -448,6 +548,7 @@ body { position:fixed; inset:0; }
 
 <header class="top">
   <img class="logo" src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png" alt="REWIND">
+
   <div class="recording-label" id="recordingLabel">
     <span class="recording-dot"></span>
     <span id="recordingTime">REC 00:00</span>
@@ -463,19 +564,18 @@ body { position:fixed; inset:0; }
   <div class="camera-controls">
     <div class="mode-selector" id="modeSelector">
 
-      <div class="zoom-panel" id="zoomPanel">
-        <div class="zoom-readout">
+      <div id="zoomPanel">
+        <div class="zoom-heading">
           <span>ZOOM</span>
           <span id="zoomValue">1.0×</span>
         </div>
         <input
           id="zoomSlider"
           type="range"
-          min="0.5"
+          min="1"
           max="3"
           step="0.1"
           value="1"
-          aria-label="Zoom"
         >
       </div>
 
@@ -489,7 +589,8 @@ body { position:fixed; inset:0; }
         <button id="shutter" aria-label="Capture">
           <span class="inner"></span>
         </button>
-        <button id="zoomToggle" aria-label="Open zoom controls" aria-expanded="false">1×</button>
+
+        <button id="zoomToggle" aria-label="Adjust zoom">1.0×</button>
       </div>
 
     </div>
@@ -544,11 +645,15 @@ let statusTimeout=null;
 let currentMode="photo";
 let slowProcessing=false;
 let slowSourceUrl=null;
+
 let zoomLevel=1;
+let slowZoom=1;
+let slowLensShape=0;
 
 const vertexShaderSource=`
 attribute vec2 position;
 varying vec2 vUv;
+
 void main(){
   vUv=position*.5+.5;
   gl_Position=vec4(position,0.,1.);
@@ -556,6 +661,7 @@ void main(){
 
 const fragmentShaderSource=`
 precision highp float;
+
 varying vec2 vUv;
 
 uniform sampler2D uVideo;
@@ -569,19 +675,21 @@ void main(){
 
   vec2 p=(vUv-.5)*2.0;
   float aspect=uResolution.x/uResolution.y;
+
+  // Aspect-correct coordinates keep the circular lens round.
   p.x*=aspect;
 
-  float radiusX=aspect*.94;
-  float radiusY=radiusX;
+  float radius=aspect*.94;
+  vec2 lens=p/radius;
 
-  vec2 lens=vec2(p.x/radiusX,p.y/radiusY);
   float angle=atan(lens.y,lens.x);
   float rawRadius=length(lens);
 
+  // Gentle, irregular optical edge distortion.
   float edgeDistortion=
-      sin(angle*5.0+.4)*.004
-    + sin(angle*9.0+1.2)*.0025
-    + sin(angle*13.0+2.1)*.0012;
+      sin(angle*5.0+.4)*.003
+    + sin(angle*9.0+1.2)*.0018
+    + sin(angle*13.0+2.1)*.0008;
 
   float edgeRadius=1.0+edgeDistortion;
   float r=rawRadius/edgeRadius;
@@ -591,35 +699,39 @@ void main(){
     return;
   }
 
-  float mapped;
-
-  if(uShape<.5){
-    float edgeCurve=pow(r,4.0)*(1.0-r);
-    mapped=r+.34*edgeCurve;
-  }else{
-    float strength=.16;
-    float radial=length(p);
-    float curve=pow(radial,3.0);
-    mapped=radial*(1.0-strength*curve);
-  }
-
-  vec2 direction=rawRadius>.0001?lens/rawRadius:vec2(0.);
   vec2 warped;
 
   if(uShape<.5){
+
+    // Circular fisheye: smooth centre, stronger edge curvature.
+    float edgeCurve=pow(r,3.5)*(1.0-r);
+    float mapped=r+.38*edgeCurve;
+
+    vec2 direction=rawRadius>.0001
+      ?lens/rawRadius
+      :vec2(0.);
+
     warped=direction*mapped;
+
   }else{
+
+    // Full-frame fisheye: smooth barrel distortion across the frame.
     float radial=length(p);
-    vec2 screenDirection=radial>.0001?p/radial:vec2(0.);
-    warped=screenDirection*(radial*(1.0-.16*pow(radial,2.0)));
+    vec2 direction=radial>.0001
+      ?p/radial
+      :vec2(0.);
+
+    float curve=1.0-.13*pow(radial,2.0);
+    float mapped=radial*curve;
+
+    // A gentle extra curve gives the image a more optical character.
+    mapped+=.025*pow(radial,4.0);
+
+    warped=direction*mapped;
   }
 
-  /*
-    Apply zoom to the source sampling coordinates AFTER
-    calculating the fisheye distortion. This keeps the
-    optical lens geometry and its warping consistent.
-  */
-  float safeZoom=max(uZoom,.01);
+  // Zoom is applied after lens distortion so the optical effect remains.
+  float safeZoom=max(uZoom,.5);
   warped/=safeZoom;
 
   float videoAspect=uVideoResolution.x/uVideoResolution.y;
@@ -633,10 +745,26 @@ void main(){
     uv.y+=warped.y*(videoAspect/aspect)*.5;
   }
 
+  // Keep sampling inside the camera image.
   uv=clamp(uv,vec2(.001),vec2(.999));
 
-  float aberration=pow(min(r,1.0),3.0)*.006;
-  vec2 offset=direction*(aberration/safeZoom);
+  // Subtle chromatic separation.
+  // Reduced at wide zoom to prevent a scratched-disc appearance.
+  float aberration=0.0;
+
+  if(uShape<.5){
+    aberration=pow(min(r,1.0),3.0)*.0035;
+  }else{
+    aberration=pow(min(length(p),1.0),2.0)*.0007;
+  }
+
+  aberration*=smoothstep(.55,1.0,uZoom);
+
+  vec2 direction=rawRadius>.0001
+    ?lens/rawRadius
+    :vec2(0.);
+
+  vec2 offset=direction*aberration;
 
   float red=texture2D(
     uVideo,
@@ -652,17 +780,20 @@ void main(){
 
   vec3 colour=vec3(red,green,blue);
 
-  float centreGlow=1.0+.10*exp(-r*r*4.0);
+  float centreGlow=1.0+.08*exp(-r*r*4.0);
 
-  // Circle retains its optical edge falloff and vignette.
-  // Full Frame receives neither.
+  // Circle has its own optical falloff.
+  // Full Frame stays clean, without a vignette.
   float circleFalloff=
-      (1.0-.28*smoothstep(.25,1.0,r))
-    * (1.0-.48*smoothstep(.62,1.0,r));
+      (1.0-.25*smoothstep(.25,1.0,r))
+    * (1.0-.40*smoothstep(.68,1.0,r));
 
-  float opticalFalloff=uShape<.5?circleFalloff:1.0;
+  float opticalFalloff=uShape<.5
+    ?circleFalloff
+    :1.0;
 
-  float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
+  float directionalLight=
+    1.0-.07*smoothstep(-.4,1.0,lens.y);
 
   colour*=centreGlow*directionalLight*opticalFalloff;
 
@@ -670,24 +801,36 @@ void main(){
   colour.g*=1.005;
   colour.b*=.965;
 
+  // Fine film grain.
   float grain=fract(
     sin(dot(gl_FragCoord.xy+uTime,vec2(12.9898,78.233)))
     *43758.5453
   );
 
-  colour+=(grain-.5)*.025;
+  colour+=(grain-.5)*.018;
 
   if(uShape<.5){
-    float redRing=exp(-pow((r-.974)/.0045,2.0));
-    float greenRing=exp(-pow((r-.990)/.0045,2.0));
-    colour.r+=redRing*.13;
-    colour.g+=greenRing*.085;
+
+    // Restrained optical colour at the circular lens edge.
+    float ringStrength=smoothstep(.7,1.0,uZoom);
+
+    float redRing=exp(-pow((r-.974)/.0055,2.0));
+    float greenRing=exp(-pow((r-.990)/.0055,2.0));
+
+    colour.r+=redRing*.075*ringStrength;
+    colour.g+=greenRing*.05*ringStrength;
+
     colour*=1.0-smoothstep(.994,1.0,r);
+
   }else{
-    float redLine=exp(-pow((vUv.x-.125)/.0018,2.0));
-    float greenLine=exp(-pow((vUv.x-.135)/.0018,2.0));
-    colour.r+=redLine*.10;
-    colour.g+=greenLine*.07;
+
+    // Very subtle full-frame colour separation.
+    // No circular rings or vignette in this mode.
+    float redLine=exp(-pow((vUv.x-.125)/.0025,2.0));
+    float greenLine=exp(-pow((vUv.x-.135)/.0025,2.0));
+
+    colour.r+=redLine*.055;
+    colour.g+=greenLine*.035;
   }
 
   gl_FragColor=vec4(colour,1.0);
@@ -723,26 +866,35 @@ function setupWebGL(){
   gl.useProgram(program);
 
   const buffer=gl.createBuffer();
+
   gl.bindBuffer(gl.ARRAY_BUFFER,buffer);
-  gl.bufferData(gl.ARRAY_BUFFER,new Float32Array([
-    -1,-1,1,-1,-1,1,1,1
-  ]),gl.STATIC_DRAW);
+
+  gl.bufferData(
+    gl.ARRAY_BUFFER,
+    new Float32Array([-1,-1,1,-1,-1,1,1,1]),
+    gl.STATIC_DRAW
+  );
 
   const position=gl.getAttribLocation(program,"position");
+
   gl.enableVertexAttribArray(position);
   gl.vertexAttribPointer(position,2,gl.FLOAT,false,0,0);
 
   texture=gl.createTexture();
+
   gl.bindTexture(gl.TEXTURE_2D,texture);
+
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);
   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+
   gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL,true);
 }
 
 function resizeCanvas(){
   const dpr=Math.min(devicePixelRatio||1,2);
+
   const width=Math.round(innerWidth*dpr);
   const height=Math.round(innerHeight*dpr);
 
@@ -751,48 +903,68 @@ function resizeCanvas(){
     canvas.height=height;
   }
 
-  if(gl) gl.viewport(0,0,canvas.width,canvas.height);
+  if(gl){
+    gl.viewport(0,0,canvas.width,canvas.height);
+  }
 }
 
 function render(now=0){
   if(!gl||!program) return;
 
   if(video.readyState>=video.HAVE_CURRENT_DATA){
+
     gl.useProgram(program);
     gl.bindTexture(gl.TEXTURE_2D,texture);
 
     try{
       gl.texImage2D(
-        gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,
-        gl.UNSIGNED_BYTE,video
+        gl.TEXTURE_2D,
+        0,
+        gl.RGBA,
+        gl.RGBA,
+        gl.UNSIGNED_BYTE,
+        video
       );
     }catch(e){}
 
-    gl.uniform1i(gl.getUniformLocation(program,"uVideo"),0);
+    const activeShape=slowProcessing
+      ?slowLensShape
+      :lensShape;
+
+    const activeZoom=slowProcessing
+      ?slowZoom
+      :zoomLevel;
+
+    gl.uniform1i(
+      gl.getUniformLocation(program,"uVideo"),
+      0
+    );
 
     gl.uniform2f(
       gl.getUniformLocation(program,"uResolution"),
-      canvas.width,canvas.height
+      canvas.width,
+      canvas.height
     );
 
     gl.uniform2f(
       gl.getUniformLocation(program,"uVideoResolution"),
-      video.videoWidth||1,video.videoHeight||1
+      video.videoWidth||1,
+      video.videoHeight||1
     );
 
     gl.uniform1f(
       gl.getUniformLocation(program,"uShape"),
-      lensShape
+      activeShape
+    );
+
+    gl.uniform1f(
+      gl.getUniformLocation(program,"uZoom"),
+      activeZoom
     );
 
     gl.uniform1f(
       gl.getUniformLocation(program,"uTime"),
       now*.001
-    );
-
-    gl.uniform1f(
-      gl.getUniformLocation(program,"uZoom"),
-      zoomLevel
     );
 
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
@@ -802,6 +974,7 @@ function render(now=0){
 }
 
 /* CAMERA */
+
 async function startCamera(){
   errorMessage.textContent="";
   startButton.textContent="OPENING CAMERA";
@@ -828,6 +1001,7 @@ async function startCamera(){
     video.srcObject=cameraStream;
     video.removeAttribute("src");
     video.playbackRate=1;
+
     await video.play();
 
     cameraReady=true;
@@ -835,6 +1009,7 @@ async function startCamera(){
     if(!program) setupWebGL();
 
     startScreen.style.display="none";
+
     resizeCanvas();
 
     cancelAnimationFrame(animationFrame);
@@ -842,8 +1017,10 @@ async function startCamera(){
 
   }catch(error){
     console.error(error);
-    errorMessage.textContent=error.message||
-      "Unable to access the camera. Check camera permissions.";
+
+    errorMessage.textContent=
+      error.message||"Unable to access the camera. Check camera permissions.";
+
     startButton.textContent="TRY AGAIN";
   }
 }
@@ -851,7 +1028,13 @@ async function startCamera(){
 startButton.addEventListener("click",startCamera);
 
 /* LENS SELECTION */
+
 function setLens(shape){
+  if(recording||slowProcessing){
+    showStatus("FINISH RECORDING FIRST");
+    return;
+  }
+
   lensShape=shape;
 
   document.getElementById("circleButton")
@@ -859,6 +1042,16 @@ function setLens(shape){
 
   document.getElementById("fullButton")
     .classList.toggle("active",shape===1);
+
+  // Circle starts at 1x. Only Full Frame can go down to 0.5x.
+  zoomSlider.min=shape===1?".5":"1";
+
+  if(shape===0&&zoomLevel<1){
+    zoomLevel=1;
+  }
+
+  updateZoomDisplay();
+  zoomSlider.value=zoomLevel;
 }
 
 document.getElementById("circleButton")
@@ -867,30 +1060,32 @@ document.getElementById("circleButton")
 document.getElementById("fullButton")
   .addEventListener("click",()=>setLens(1));
 
-/* ZOOM CONTROLS */
-function updateZoom(value){
-  zoomLevel=Math.max(.5,Math.min(3,Number(value)));
-  zoomSlider.value=zoomLevel;
-  zoomValue.textContent=zoomLevel.toFixed(1)+"×";
-  zoomToggle.textContent=zoomLevel.toFixed(1)+"×";
-}
+/* ZOOM */
 
-zoomSlider.addEventListener("input",()=>{
-  updateZoom(zoomSlider.value);
-});
+function updateZoomDisplay(){
+  const label=zoomLevel.toFixed(1)+"×";
+
+  zoomValue.textContent=label;
+  zoomToggle.textContent=label;
+  zoomSlider.value=zoomLevel;
+}
 
 zoomToggle.addEventListener("click",()=>{
   const isOpen=zoomPanel.classList.toggle("open");
 
   zoomToggle.classList.toggle("active",isOpen);
-  zoomToggle.setAttribute("aria-expanded",String(isOpen));
-  zoomToggle.setAttribute(
-    "aria-label",
-    isOpen?"Close zoom controls":"Open zoom controls"
-  );
+});
+
+zoomSlider.addEventListener("input",()=>{
+  if(recording||slowProcessing) return;
+
+  zoomLevel=parseFloat(zoomSlider.value);
+
+  updateZoomDisplay();
 });
 
 /* MODE SELECTION */
+
 function setMode(mode){
   if(recording||slowProcessing){
     showStatus("FINISH RECORDING FIRST");
@@ -903,7 +1098,11 @@ function setMode(mode){
     el.classList.toggle("active",el.dataset.mode===mode);
   });
 
-  shutter.classList.remove("video-mode","slow-mode","recording");
+  shutter.classList.remove(
+    "video-mode",
+    "slow-mode",
+    "recording"
+  );
 
   if(mode==="video"){
     shutter.classList.add("video-mode");
@@ -919,6 +1118,7 @@ document.querySelectorAll(".mode-name").forEach(button=>{
 });
 
 /* STATUS */
+
 function showStatus(message){
   statusMessage.textContent=message;
   statusMessage.classList.add("show");
@@ -931,6 +1131,7 @@ function showStatus(message){
 }
 
 /* SWIPE MODE SELECTOR */
+
 let swipeStartX=0;
 let swipeStartY=0;
 let swiping=false;
@@ -958,19 +1159,27 @@ modeSelector.addEventListener("touchend",event=>{
   const modes=["slow","photo","video"];
   let index=modes.indexOf(currentMode);
 
-  if(dx<0) index=Math.min(2,index+1);
-  else index=Math.max(0,index-1);
+  if(dx<0){
+    index=Math.min(2,index+1);
+  }else{
+    index=Math.max(0,index-1);
+  }
 
   setMode(modes[index]);
 },{passive:true});
 
 /* FILE SAVING */
+
 async function saveFile(blob,filename){
   const file=new File([blob],filename,{type:blob.type});
 
   if(navigator.share&&navigator.canShare?.({files:[file]})){
     try{
-      await navigator.share({files:[file],title:"REWIND"});
+      await navigator.share({
+        files:[file],
+        title:"REWIND"
+      });
+
       return;
     }catch(error){
       if(error.name==="AbortError") return;
@@ -991,6 +1200,7 @@ async function saveFile(blob,filename){
 }
 
 /* PHOTO */
+
 function takePhoto(){
   if(!cameraReady||recording||slowProcessing) return;
 
@@ -1000,12 +1210,17 @@ function takePhoto(){
       return;
     }
 
-    await saveFile(blob,"REWIND-"+Date.now()+".jpg");
+    await saveFile(
+      blob,
+      "REWIND-"+Date.now()+".jpg"
+    );
+
     showStatus("PHOTO CAPTURED");
   },"image/jpeg",.96);
 }
 
 /* VIDEO FORMAT */
+
 function supportedMime(){
   const formats=[
     "video/mp4;codecs=avc1.42E01E",
@@ -1019,10 +1234,13 @@ function supportedMime(){
 }
 
 /* RECORDING CLOCK */
+
 function updateRecordingClock(){
   if(!recording) return;
 
-  const seconds=Math.floor((Date.now()-recordingStartedAt)/1000);
+  const seconds=Math.floor(
+    (Date.now()-recordingStartedAt)/1000
+  );
 
   recordingTime.textContent="REC "+
     String(Math.floor(seconds/60)).padStart(2,"0")+":"+
@@ -1031,8 +1249,11 @@ function updateRecordingClock(){
 
 function beginRecordingClock(){
   recordingStartedAt=Date.now();
+
   recordingLabel.classList.add("active");
+
   updateRecordingClock();
+
   recordingClock=setInterval(updateRecordingClock,250);
 }
 
@@ -1042,6 +1263,7 @@ function endRecordingClock(){
 }
 
 /* NORMAL VIDEO */
+
 function startNormalVideo(){
   if(!cameraReady||recording) return;
 
@@ -1062,12 +1284,15 @@ function startNormalVideo(){
     recordedChunks=[];
 
     recorder.ondataavailable=e=>{
-      if(e.data?.size) recordedChunks.push(e.data);
+      if(e.data?.size){
+        recordedChunks.push(e.data);
+      }
     };
 
     recorder.onstop=async()=>{
       const type=recorder.mimeType||"video/webm";
       const ext=type.includes("mp4")?"mp4":"webm";
+
       const blob=new Blob(recordedChunks,{type});
 
       stream.getTracks().forEach(track=>track.stop());
@@ -1085,8 +1310,10 @@ function startNormalVideo(){
     };
 
     recorder.start(250);
+
     recording=true;
     shutter.classList.add("recording");
+
     beginRecordingClock();
 
   }catch(error){
@@ -1099,13 +1326,18 @@ function stopNormalVideo(){
   if(!recording||!recorder) return;
 
   recording=false;
+
   endRecordingClock();
+
   shutter.classList.remove("recording");
 
-  if(recorder.state!=="inactive") recorder.stop();
+  if(recorder.state!=="inactive"){
+    recorder.stop();
+  }
 }
 
 /* SLOW MOTION RECORDING */
+
 async function startSlowMotion(){
   if(!cameraReady||recording||slowProcessing) return;
 
@@ -1115,6 +1347,10 @@ async function startSlowMotion(){
   }
 
   try{
+    // Lock the selected lens and zoom for the entire recording.
+    slowLensShape=lensShape;
+    slowZoom=zoomLevel;
+
     const sourceStream=canvas.captureStream(60);
     const mimeType=supportedMime();
 
@@ -1126,14 +1362,19 @@ async function startSlowMotion(){
     const sourceChunks=[];
 
     sourceRecorder.ondataavailable=e=>{
-      if(e.data?.size) sourceChunks.push(e.data);
+      if(e.data?.size){
+        sourceChunks.push(e.data);
+      }
     };
 
     sourceRecorder.onstop=async()=>{
       sourceStream.getTracks().forEach(track=>track.stop());
 
       const sourceType=sourceRecorder.mimeType||"video/webm";
-      const sourceBlob=new Blob(sourceChunks,{type:sourceType});
+
+      const sourceBlob=new Blob(sourceChunks,{
+        type:sourceType
+      });
 
       if(!sourceBlob.size){
         recording=false;
@@ -1147,33 +1388,37 @@ async function startSlowMotion(){
     };
 
     sourceRecorder.start(250);
+
     recorder=sourceRecorder;
     recording=true;
 
     shutter.classList.add("recording");
+
     beginRecordingClock();
 
     showStatus("SLOW MOTION RECORDING");
 
   }catch(error){
     console.error(error);
+
     recording=false;
     resetShutter();
+
     showStatus("COULD NOT START SLOW MOTION");
   }
 }
 
-/* SLOW-MOTION EXPORT */
+/* SLOW MOTION EXPORT */
+
 async function processSlowMotion(sourceBlob){
   slowProcessing=true;
   recording=false;
+
   endRecordingClock();
 
   shutter.classList.add("recording");
 
   const originalStream=cameraStream;
-  const originalLensShape=lensShape;
-  const originalZoom=zoomLevel;
 
   slowSourceUrl=URL.createObjectURL(sourceBlob);
 
@@ -1251,7 +1496,9 @@ async function processSlowMotion(sourceBlob){
     outputChunks=[];
 
     outputRecorder.ondataavailable=e=>{
-      if(e.data?.size) outputChunks.push(e.data);
+      if(e.data?.size){
+        outputChunks.push(e.data);
+      }
     };
 
     const finished=new Promise((resolve,reject)=>{
@@ -1284,11 +1531,14 @@ async function processSlowMotion(sourceBlob){
 
     outputRecorder.start(250);
 
-    await new Promise(resolve=>requestAnimationFrame(()=>{
-      requestAnimationFrame(resolve);
-    }));
+    await new Promise(resolve=>{
+      requestAnimationFrame(()=>{
+        requestAnimationFrame(resolve);
+      });
+    });
 
     await video.play();
+
     video.playbackRate=.25;
 
     if(Math.abs(video.playbackRate-.25)>.01){
@@ -1305,7 +1555,10 @@ async function processSlowMotion(sourceBlob){
 
     const outputType=outputRecorder.mimeType||"video/webm";
     const extension=outputType.includes("mp4")?"mp4":"webm";
-    const result=new Blob(outputChunks,{type:outputType});
+
+    const result=new Blob(outputChunks,{
+      type:outputType
+    });
 
     if(result.size){
       await saveFile(
@@ -1320,10 +1573,15 @@ async function processSlowMotion(sourceBlob){
 
   }catch(error){
     console.error("Slow-motion export error:",error);
-    showStatus(error.message||"SLOW MOTION PROCESSING FAILED");
+
+    showStatus(
+      error.message||"SLOW MOTION PROCESSING FAILED"
+    );
 
     if(outputRecorder&&outputRecorder.state!=="inactive"){
-      try{outputRecorder.stop();}catch(e){}
+      try{
+        outputRecorder.stop();
+      }catch(e){}
     }
 
   }finally{
@@ -1331,9 +1589,11 @@ async function processSlowMotion(sourceBlob){
       outputStream.getTracks().forEach(track=>track.stop());
     }
 
+    // Restore the original live camera.
     video.pause();
     video.removeAttribute("src");
     video.srcObject=originalStream;
+
     video.playbackRate=1;
     video.defaultPlaybackRate=1;
     video.muted=true;
@@ -1349,10 +1609,8 @@ async function processSlowMotion(sourceBlob){
       slowSourceUrl=null;
     }
 
-    lensShape=originalLensShape;
-    updateZoom(originalZoom);
-
     slowProcessing=false;
+
     resetShutter();
   }
 }
@@ -1361,6 +1619,7 @@ function stopSlowMotion(){
   if(!recording||!recorder) return;
 
   recording=false;
+
   endRecordingClock();
 
   if(recorder.state!=="inactive"){
@@ -1374,6 +1633,7 @@ function resetShutter(){
 }
 
 /* SHUTTER ACTION */
+
 shutter.addEventListener("click",event=>{
   event.preventDefault();
 
@@ -1385,18 +1645,25 @@ shutter.addEventListener("click",event=>{
   }
 
   if(currentMode==="video"){
-    if(recording) stopNormalVideo();
-    else startNormalVideo();
+    if(recording){
+      stopNormalVideo();
+    }else{
+      startNormalVideo();
+    }
     return;
   }
 
   if(currentMode==="slow"){
-    if(recording) stopSlowMotion();
-    else startSlowMotion();
+    if(recording){
+      stopSlowMotion();
+    }else{
+      startSlowMotion();
+    }
   }
 });
 
 /* RESIZE */
+
 window.addEventListener("resize",resizeCanvas);
 
 window.addEventListener("orientationchange",()=>{
@@ -1404,6 +1671,7 @@ window.addEventListener("orientationchange",()=>{
 });
 
 /* CLEANUP */
+
 window.addEventListener("pagehide",()=>{
   cancelAnimationFrame(animationFrame);
   clearInterval(recordingClock);
@@ -1412,9 +1680,7 @@ window.addEventListener("pagehide",()=>{
     cameraStream.getTracks().forEach(track=>track.stop());
   }
 });
-
-/* INITIAL ZOOM DISPLAY */
-updateZoom(1);
 </script>
+
 </body>
 </html>

@@ -409,9 +409,9 @@ body {
   transform:scale(1);
   filter:blur(0);
   transition:
-    opacity .48s cubic-bezier(.22,.75,.25,1),
-    transform .58s cubic-bezier(.22,.75,.25,1),
-    filter .48s ease;
+    opacity .62s cubic-bezier(.22,.75,.25,1),
+    transform .72s cubic-bezier(.22,.75,.25,1),
+    filter .62s ease;
   will-change:opacity,transform,filter;
   position:absolute;
   z-index:10;
@@ -463,8 +463,8 @@ body {
   opacity:0;
   transform:translateY(10px);
   transition:
-    opacity .42s ease,
-    transform .52s cubic-bezier(.22,.75,.25,1);
+    opacity .56s ease,
+    transform .64s cubic-bezier(.22,.75,.25,1);
 }
 
 body.camera-active .top,
@@ -656,7 +656,7 @@ const video = document.getElementById("cameraVideo");
 const canvas = document.getElementById("cameraCanvas");
 const gl = canvas.getContext("webgl", {
   alpha:false,
-  antialias:true,
+  antialias:false,
   preserveDrawingBuffer:true
 });
 
@@ -875,7 +875,7 @@ function setupWebGL(){
 /* CANVAS */
 
 function resizeCanvas(){
-  const dpr = Math.min(devicePixelRatio||1,2);
+  const dpr = Math.min(devicePixelRatio||1,1.5);
 
   const width = Math.round(innerWidth*dpr);
   const height = Math.round(innerHeight*dpr);
@@ -1093,7 +1093,7 @@ function animateLensTo(shape){
   const from = displayLensShape;
   const to = shape;
   const startedAt = performance.now();
-  const duration = 320;
+  const duration = 520;
 
   function frame(now){
     const progress = Math.min(1,(now-startedAt)/duration);

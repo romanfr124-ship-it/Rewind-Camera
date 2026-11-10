@@ -110,6 +110,7 @@ body { position:fixed; inset:0; }
   font-weight:700;
   letter-spacing:1.5px;
   backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 .small-control.active {
   color:white;
@@ -151,6 +152,7 @@ body { position:fixed; inset:0; }
   align-items:center;
   justify-content:center;
   backdrop-filter:blur(8px);
+  -webkit-backdrop-filter:blur(8px);
 }
 #shutter {
   width:78px;
@@ -305,7 +307,7 @@ body { position:fixed; inset:0; }
 <canvas id="cameraCanvas"></canvas>
 
 <header class="top">
-  <img class="logo" src="rewind-logo.png" alt="REWIND">
+  <img class="logo" src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png" alt="REWIND">
   <div class="recording-label" id="recordingLabel">
     <span class="recording-dot"></span>
     <span id="recordingTime">REC 00:00</span>
@@ -333,7 +335,7 @@ body { position:fixed; inset:0; }
 <div id="statusMessage"></div>
 
 <div id="startScreen">
-  <img class="start-logo" src="rewind-logo.png" alt="REWIND">
+  <img class="start-logo" src="680A3BE0-D839-47C8-8C90-0FE9BD1F2173.png" alt="REWIND">
   <p>A different way to capture the moment. Allow camera access to begin.</p>
   <button id="startButton">OPEN CAMERA</button>
   <div id="errorMessage"></div>
@@ -410,16 +412,15 @@ void main(){
     return;
   }
 
-  // Fisheye projection: stronger expansion near the rim.
   float maxAngle=1.32;
   float theta=r*maxAngle;
   float mapped=tan(theta)/tan(maxAngle);
   vec2 direction=r>.0001?lens/r:vec2(0.);
   vec2 warped=direction*mapped;
 
-  // Crop the camera feed to its natural aspect ratio.
   float videoAspect=uVideoResolution.x/uVideoResolution.y;
   vec2 uv=vec2(.5);
+
   if(videoAspect>aspect){
     uv.x+=warped.x*(aspect/videoAspect)*.5;
     uv.y+=warped.y*.5;
@@ -427,24 +428,25 @@ void main(){
     uv.x+=warped.x*.5;
     uv.y+=warped.y*(videoAspect/aspect)*.5;
   }
+
   uv=clamp(uv,vec2(.001),vec2(.999));
 
-  // Optical colour separation at the outer edge.
   float aberration=pow(r,3.0)*.004;
   vec2 offset=direction*aberration;
+
   float red=texture2D(uVideo,clamp(uv+offset,.001,.999)).r;
   float green=texture2D(uVideo,uv).g;
   float blue=texture2D(uVideo,clamp(uv-offset,.001,.999)).b;
+
   vec3 colour=vec3(red,green,blue);
 
-  // Uneven lens illumination and realistic edge falloff.
   float centreGlow=1.0+.12*exp(-r*r*5.0);
   float edgeFalloff=1.0-.34*smoothstep(.12,1.0,r);
   float directionalLight=1.0-.09*smoothstep(-.4,1.0,lens.y);
   float vignette=1.0-.57*smoothstep(.48,1.0,r);
+
   colour*=centreGlow*edgeFalloff*directionalLight*vignette;
 
-  // Slight warm vintage colour response.
   colour.r*=1.035;
   colour.g*=1.005;
   colour.b*=.965;
@@ -468,15 +470,19 @@ function createShader(type,source){
 
 function setupWebGL(){
   if(!gl) throw new Error("WebGL is unavailable.");
+
   const vs=createShader(gl.VERTEX_SHADER,vertexShaderSource);
   const fs=createShader(gl.FRAGMENT_SHADER,fragmentShaderSource);
+
   program=gl.createProgram();
   gl.attachShader(program,vs);
   gl.attachShader(program,fs);
   gl.linkProgram(program);
+
   if(!gl.getProgramParameter(program,gl.LINK_STATUS)){
     throw new Error(gl.getProgramInfoLog(program));
   }
+
   gl.useProgram(program);
 
   const buffer=gl.createBuffer();
@@ -502,18 +508,22 @@ function resizeCanvas(){
   const dpr=Math.min(devicePixelRatio||1,2);
   const width=Math.round(innerWidth*dpr);
   const height=Math.round(innerHeight*dpr);
+
   if(canvas.width!==width||canvas.height!==height){
     canvas.width=width;
     canvas.height=height;
   }
+
   if(gl) gl.viewport(0,0,canvas.width,canvas.height);
 }
 
 function render(now=0){
   if(!gl||!program) return;
+
   if(video.readyState>=video.HAVE_CURRENT_DATA){
     gl.useProgram(program);
     gl.bindTexture(gl.TEXTURE_2D,texture);
+
     try{
       gl.texImage2D(gl.TEXTURE_2D,0,gl.RGBA,gl.RGBA,gl.UNSIGNED_BYTE,video);
     }catch(e){}
@@ -523,8 +533,10 @@ function render(now=0){
     gl.uniform2f(gl.getUniformLocation(program,"uVideoResolution"),video.videoWidth||1,video.videoHeight||1);
     gl.uniform1f(gl.getUniformLocation(program,"uShape"),lensShape);
     gl.uniform1f(gl.getUniformLocation(program,"uTime"),now*.001);
+
     gl.drawArrays(gl.TRIANGLE_STRIP,0,4);
   }
+
   animationFrame=requestAnimationFrame(render);
 }
 
@@ -536,6 +548,7 @@ async function startCamera(){
     if(!navigator.mediaDevices?.getUserMedia){
       throw new Error("Open REWIND in Safari using its HTTPS address.");
     }
+
     if(cameraStream){
       cameraStream.getTracks().forEach(track=>track.stop());
     }
@@ -559,6 +572,7 @@ async function startCamera(){
     resizeCanvas();
     cancelAnimationFrame(animationFrame);
     animationFrame=requestAnimationFrame(render);
+
   }catch(error){
     console.error(error);
     errorMessage.textContent=error.message||"Unable to access the camera. Check camera permissions.";
@@ -573,6 +587,7 @@ document.getElementById("flipButton").addEventListener("click",async()=>{
     showStatus("STOP RECORDING FIRST");
     return;
   }
+
   facingMode=facingMode==="environment"?"user":"environment";
   await startCamera();
 });
@@ -582,6 +597,7 @@ function setLens(shape){
   document.getElementById("circleButton").classList.toggle("active",shape===0);
   document.getElementById("ovalButton").classList.toggle("active",shape===1);
 }
+
 document.getElementById("circleButton").addEventListener("click",()=>setLens(0));
 document.getElementById("ovalButton").addEventListener("click",()=>setLens(1));
 
@@ -594,6 +610,7 @@ function showStatus(message){
 
 async function saveFile(blob,filename){
   const file=new File([blob],filename,{type:blob.type});
+
   if(navigator.share&&navigator.canShare?.({files:[file]})){
     try{
       await navigator.share({files:[file],title:"REWIND"});
@@ -602,6 +619,7 @@ async function saveFile(blob,filename){
       if(error.name==="AbortError") return;
     }
   }
+
   const url=URL.createObjectURL(blob);
   const link=document.createElement("a");
   link.href=url;
@@ -609,16 +627,19 @@ async function saveFile(blob,filename){
   document.body.appendChild(link);
   link.click();
   link.remove();
+
   setTimeout(()=>URL.revokeObjectURL(url),15000);
 }
 
 function takePhoto(){
   if(!cameraReady||recording) return;
+
   canvas.toBlob(async blob=>{
     if(!blob){
       showStatus("PHOTO COULD NOT BE SAVED");
       return;
     }
+
     await saveFile(blob,"REWIND-"+Date.now()+".jpg");
     showStatus("PHOTO CAPTURED");
   },"image/jpeg",.96);
@@ -626,6 +647,7 @@ function takePhoto(){
 
 function startRecording(){
   if(!cameraReady||recording) return;
+
   if(!canvas.captureStream||!window.MediaRecorder){
     showStatus("VIDEO RECORDING NOT SUPPORTED");
     return;
@@ -642,6 +664,7 @@ function startRecording(){
       "video/webm;codecs=vp8,opus",
       "video/webm"
     ];
+
     const mimeType=formats.find(type=>MediaRecorder.isTypeSupported(type));
     recorder=new MediaRecorder(recordingStream,mimeType?{mimeType}:{});
     recordedChunks=[];
@@ -659,6 +682,7 @@ function startRecording(){
       const type=recorder.mimeType||"video/webm";
       const extension=type.includes("mp4")?"mp4":"webm";
       const blob=new Blob(recordedChunks,{type});
+
       recordingStream.getTracks().forEach(track=>track.stop());
 
       if(blob.size){
@@ -667,17 +691,21 @@ function startRecording(){
       }else{
         showStatus("VIDEO COULD NOT BE SAVED");
       }
+
       recordedChunks=[];
     };
 
     recorder.start(250);
     recording=true;
     recordingStartedAt=Date.now();
+
     shutter.classList.add("recording");
     recordingLabel.classList.add("active");
     instruction.textContent="TAP AGAIN TO STOP RECORDING";
+
     updateRecordingClock();
     recordingClock=setInterval(updateRecordingClock,250);
+
   }catch(error){
     console.error(error);
     showStatus("COULD NOT START RECORDING");
@@ -686,17 +714,22 @@ function startRecording(){
 
 function stopRecording(){
   if(!recording||!recorder) return;
+
   recording=false;
   clearInterval(recordingClock);
+
   shutter.classList.remove("recording");
   recordingLabel.classList.remove("active");
   instruction.textContent="TAP PHOTO · HOLD 2 SECONDS TO RECORD";
+
   if(recorder.state!=="inactive") recorder.stop();
 }
 
 function updateRecordingClock(){
   if(!recording) return;
+
   const seconds=Math.floor((Date.now()-recordingStartedAt)/1000);
+
   recordingTime.textContent="REC "+
     String(Math.floor(seconds/60)).padStart(2,"0")+":"+
     String(seconds%60).padStart(2,"0");
@@ -704,36 +737,42 @@ function updateRecordingClock(){
 
 /* SHUTTER:
    Tap = photo.
-   Hold for 2 seconds = start video.
+   Hold 2 seconds = start video.
    Release = continue recording.
    Next tap = stop video.
 */
 function shutterDown(event){
   event.preventDefault();
   if(!cameraReady) return;
+
   pointerDown=true;
   longPressTriggered=false;
 
   if(recording) return;
 
   shutter.classList.add("holding");
+
   holdTimer=setTimeout(()=>{
     if(!pointerDown) return;
+
     longPressTriggered=true;
     shutter.classList.remove("holding");
     startRecording();
+
   },2000);
 }
 
 function shutterUp(event){
   event.preventDefault();
   if(!pointerDown) return;
+
   pointerDown=false;
 
   if(holdTimer){
     clearTimeout(holdTimer);
     holdTimer=null;
   }
+
   shutter.classList.remove("holding");
 
   if(recording){
@@ -747,10 +786,12 @@ function shutterUp(event){
 
 function shutterCancel(){
   pointerDown=false;
+
   if(holdTimer){
     clearTimeout(holdTimer);
     holdTimer=null;
   }
+
   shutter.classList.remove("holding");
 }
 
@@ -765,8 +806,12 @@ window.addEventListener("orientationchange",()=>setTimeout(resizeCanvas,250));
 window.addEventListener("pagehide",()=>{
   cancelAnimationFrame(animationFrame);
   clearInterval(recordingClock);
+
   if(holdTimer) clearTimeout(holdTimer);
-  if(cameraStream) cameraStream.getTracks().forEach(track=>track.stop());
+
+  if(cameraStream){
+    cameraStream.getTracks().forEach(track=>track.stop());
+  }
 });
 </script>
 </body>

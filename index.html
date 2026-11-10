@@ -724,6 +724,7 @@ uniform vec2 uVideoResolution;
 uniform float uShape;
 uniform float uTime;
 uniform float uZoom;
+uniform vec2 uZoomCenter;
 
 void main(){
   vec2 p = (vUv - .5) * 2.0;
@@ -748,11 +749,18 @@ void main(){
   float circleMapped = r + .55 * pow(r,3.0) * (1.0-r);
   vec2 circleWarped = direction * circleMapped * lensRadius;
 
-  // Full Frame stays mostly natural, with only a very subtle edge bend.
+  // Full Frame has its own optical-style zoom. The focal point follows
+  // the pinch midpoint, while magnification also changes radial edge warp.
   // Circle mode's fisheye mapping above is intentionally left untouched.
-  vec2 fullLens = vec2(p.x / aspect,p.y);
+  vec2 fullLens = vec2(p.x / aspect,p.y) - uZoomCenter;
   float fullRadius = length(fullLens);
-  vec2 fullWarped = p * (1.0 + 0.018 * fullRadius * fullRadius);
+  float fullWarpAmount = 0.035 + (uZoom - 1.0) * 0.028;
+  float fullMagnification = 1.0 / max(uZoom,0.5);
+  vec2 fullMapped = fullLens
+    * (1.0 + fullWarpAmount * fullRadius * fullRadius)
+    * fullMagnification
+    + uZoomCenter;
+  vec2 fullWarped = vec2(fullMapped.x * aspect,fullMapped.y);
 
   // Smoothly morph the actual lens mapping instead of switching abruptly.
   vec2 warped = mix(circleWarped,fullWarped,uShape);
@@ -769,7 +777,10 @@ void main(){
     uv.y += warped.y * (aspect/videoAspect) * .5;
   }
 
-  uv = vec2(.5) + (uv-vec2(.5))/uZoom;
+  // Circle retains its original straightforward zoom. Full Frame zoom
+  // is handled inside its optical mapping above.
+  float sampleZoom = mix(uZoom,1.0,uShape);
+  uv = vec2(.5) + (uv-vec2(.5))/sampleZoom;
   if(uv.x<0.0 || uv.x>1.0 || uv.y<0.0 || uv.y>1.0){
     gl_FragColor = vec4(0.,0.,0.,1.);
     return;
@@ -945,6 +956,12 @@ function render(now=0){
     gl.uniform1f(
       gl.getUniformLocation(program,"uZoom"),
       activeZoom
+    );
+
+    gl.uniform2f(
+      gl.getUniformLocation(program,"uZoomCenter"),
+      fullFrameZoomCenterX,
+      fullFrameZoomCenterY
     );
 
     gl.uniform1f(
@@ -1213,6 +1230,8 @@ document.addEventListener("touchcancel",()=>{
 let pinchStartDistance = 0;
 let pinchStartZoom = 1;
 let pinching = false;
+let fullFrameZoomCenterX = 0;
+let fullFrameZoomCenterY = 0;
 
 function getTouchDistance(touches){
   const dx = touches[0].clientX-touches[1].clientX;
@@ -1241,6 +1260,15 @@ canvas.addEventListener("touchmove",event=>{
 
   zoomLevel = Math.max(minimum,Math.min(3,pinchStartZoom*scale));
   zoomLevel = Math.round(zoomLevel*10)/10;
+
+  if(lensShape===1){
+    const rect = canvas.getBoundingClientRect();
+    const centreX = (event.touches[0].clientX+event.touches[1].clientX)*.5;
+    const centreY = (event.touches[0].clientY+event.touches[1].clientY)*.5;
+    fullFrameZoomCenterX = Math.max(-.75,Math.min(.75,(centreX-rect.left)/rect.width*2-1));
+    fullFrameZoomCenterY = Math.max(-.75,Math.min(.75,1-(centreY-rect.top)/rect.height*2));
+  }
+
   updateZoomInterface();
 },{passive:false});
 

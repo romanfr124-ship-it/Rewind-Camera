@@ -1,4 +1,5 @@
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -78,9 +79,6 @@ body {
   object-fit:contain;
   transition:filter .25s ease;
 }
-
-/* Full Frame logo: black lettering with a white outline.
-   The original transparent PNG is retained. */
 
 .logo.full-frame {
   filter:
@@ -712,8 +710,20 @@ void main(){
   float edgeRadius = 1.0 + edgeDistortion;
   float r = rawRadius / edgeRadius;
 
-  if(uShape < .5 && r > 1.0){
+  // Allow a small area outside the lens for the blue optical halo.
+  if(uShape < .5 && r > 1.055){
     gl_FragColor = vec4(0.,0.,0.,1.);
+    return;
+  }
+
+  // Render the soft blue halo outside the circular lens boundary.
+  // This follows the same irregular edge as the lens itself.
+  if(uShape < .5 && r > 1.0){
+    float halo = 1.0 - smoothstep(1.0,1.055,r);
+    float haloStrength = halo * .18;
+    vec3 blueHalo = vec3(.015,.075,.30) * haloStrength;
+
+    gl_FragColor = vec4(blueHalo,1.0);
     return;
   }
 
@@ -824,6 +834,19 @@ void main(){
     colour.g += greenRing * .085;
 
     colour *= 1.0-smoothstep(.994,1.0,r);
+
+    // Subtle blue optical coating around the entire fisheye perimeter.
+    // Applied after the edge fade so the blue tint remains visible.
+    float blueEdge = exp(-pow((r-.978)/.022,2.0));
+    float blueStrength = blueEdge * .28;
+
+    colour = mix(
+      colour,
+      vec3(.035,.16,.48),
+      blueStrength
+    );
+
+    colour.b += blueEdge*.10;
 
   }else{
 

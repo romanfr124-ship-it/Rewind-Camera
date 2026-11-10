@@ -405,6 +405,14 @@ body {
 /* START SCREEN */
 
 #startScreen {
+  opacity:1;
+  transform:scale(1);
+  filter:blur(0);
+  transition:
+    opacity .48s cubic-bezier(.22,.75,.25,1),
+    transform .58s cubic-bezier(.22,.75,.25,1),
+    filter .48s ease;
+  will-change:opacity,transform,filter;
   position:absolute;
   z-index:10;
   inset:0;
@@ -441,6 +449,44 @@ body {
   font-size:10px;
   font-weight:800;
   letter-spacing:2px;
+}
+
+#startScreen.leaving {
+  opacity:0;
+  transform:scale(1.035);
+  filter:blur(8px);
+  pointer-events:none;
+}
+
+.top,
+.bottom {
+  opacity:0;
+  transform:translateY(10px);
+  transition:
+    opacity .42s ease,
+    transform .52s cubic-bezier(.22,.75,.25,1);
+}
+
+body.camera-active .top,
+body.camera-active .bottom {
+  opacity:1;
+  transform:translateY(0);
+}
+
+body.camera-active .top {
+  transition-delay:.08s;
+}
+
+body.camera-active .bottom {
+  transition-delay:.14s;
+}
+
+@media (prefers-reduced-motion:reduce) {
+  #startScreen,
+  .top,
+  .bottom {
+    transition:none !important;
+  }
 }
 
 #errorMessage {
@@ -966,12 +1012,22 @@ async function startCamera(){
       setupWebGL();
     }
 
-    startScreen.style.display = "none";
-
     resizeCanvas();
 
     cancelAnimationFrame(animationFrame);
     animationFrame = requestAnimationFrame(render);
+
+    // Reveal the live camera first, then smoothly dismiss the opening screen.
+    requestAnimationFrame(()=>{
+      document.body.classList.add("camera-active");
+      startScreen.classList.add("leaving");
+    });
+
+    startScreen.addEventListener("transitionend",event=>{
+      if(event.target===startScreen && event.propertyName==="opacity"){
+        startScreen.style.display="none";
+      }
+    },{once:true});
 
   }catch(error){
 
